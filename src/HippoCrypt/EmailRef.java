@@ -8,5 +8,5 @@ public class EmailRef {
 	public String date;
 	
 	@Override
-	public String toString () {return subject+" "+date;}
+	public String toString () {return "<html><body>"+(subject+" "+date).replaceAll ("<", "&lt;").replaceAll (">", "&gt;")+"</body></html>";}
 }

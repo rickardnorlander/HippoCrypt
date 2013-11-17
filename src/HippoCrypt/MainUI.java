@@ -68,6 +68,7 @@ public class MainUI extends JFrame {
 				}
 			}
 		});
+		mailFolderTree.putClientProperty("html.disable", Boolean.TRUE);
 		mailFolderTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 		
 		JButton composeButton = new JButton("Compose");
@@ -104,11 +105,13 @@ public class MainUI extends JFrame {
 		bodyIn = new JTextPane();
 		bodyIn.setEditable(false);
 		scrollPane_1.setViewportView(bodyIn);
-		bodyIn.setText("A");
+		bodyIn.putClientProperty("html.disable", Boolean.TRUE);
 		
 		dateLabel = new JLabel("Date");
 		dateLabel.setBounds(254, 11, 161, 14);
 		showMailPanel.add(dateLabel);
+		dateLabel.putClientProperty("html.disable", Boolean.TRUE);
+		
 		
 		JButton replyAllButton = new JButton("Reply all");
 		replyAllButton.setBounds(119, 353, 89, 23);
@@ -130,10 +133,12 @@ public class MainUI extends JFrame {
 		fromLabel = new JLabel("");
 		fromLabel.setBounds(63, 11, 170, 14);
 		showMailPanel.add(fromLabel);
+		fromLabel.putClientProperty("html.disable", Boolean.TRUE);
 		
 		subjectLabelIn = new JLabel("");
 		subjectLabelIn.setBounds(63, 30, 170, 14);
 		showMailPanel.add(subjectLabelIn);
+		subjectLabelIn.putClientProperty("html.disable", Boolean.TRUE);
 		
 		JPanel composeMailPanel = new JPanel();
 		composeMailPanel.setBackground(Color.ORANGE);
@@ -206,6 +211,7 @@ public class MainUI extends JFrame {
 		emailList.setBounds(10, 11, 457, 365);
 		emailList.setBorder(new LineBorder(new Color(0, 0, 0)));
 		mailListPanel.add(emailList);
+		emailList.putClientProperty("html.disable", Boolean.TRUE);
 		util.SwingLists.addAction (emailList, new AbstractAction () {
 			@Override
 			public void actionPerformed (ActionEvent e) {

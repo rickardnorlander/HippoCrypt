@@ -8,7 +8,8 @@ public class ListPrefs {
 		for (String s : p.keys ()) {
 			System.out.println (s+ " "+p.get (s, null));
 		}
-		p.put ("key-rickardnorlander@gmail.com", "3C9DD01D");
-		p.remove ("key-klingande@gmail.com");
+//		p.put ("gpg-fp", "3C9DD01D");
+//		p.remove ("key-rickardnorlander@gmail.com");
+//		p.remove ("key-klingande@gmail.com");
 	}
 }

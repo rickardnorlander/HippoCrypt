@@ -1,0 +1,2 @@
+Todo:
+Remember to disable all html for risky components

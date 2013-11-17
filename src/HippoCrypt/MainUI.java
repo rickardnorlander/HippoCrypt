@@ -76,8 +76,8 @@ public class MainUI extends JFrame {
 			@Override
 			public void mouseClicked (MouseEvent arg0) {
 				final TreePath tp = mailFolderTree.getPathForLocation (arg0.getX (), arg0.getY ());
-				final long id = startSlowThing ();
 				if (tp != null) {
+					final long id = startSlowThing ();
 					new SwingWorker<java.util.List<EmailRef>, Object> () {
 						@Override
 						protected List<EmailRef> doInBackground () throws Exception {

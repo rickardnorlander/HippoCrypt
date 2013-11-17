@@ -2,13 +2,22 @@ package util;
 
 import java.awt.Rectangle;
 import java.awt.event.*;
+import java.lang.reflect.InvocationTargetException;
 
 import javax.swing.*;
 
-public abstract class SwingLists {
+public abstract class Swing {
 	private static final KeyStroke ENTER = KeyStroke.getKeyStroke (KeyEvent.VK_ENTER, 0);
 
-	public static void addAction (final JList<?> list, Action performAction) {
+	public static void runOnEDTNow (Runnable r) throws InvocationTargetException, InterruptedException {
+		if (SwingUtilities.isEventDispatchThread ())
+			r.run ();
+		else {
+			SwingUtilities.invokeAndWait (r);
+		}
+	}
+	
+	public static void addActionToList (final JList<?> list, Action performAction) {
 		InputMap im = list.getInputMap ();
 		im.put (ENTER, ENTER);
 		list.getActionMap ().put (ENTER, performAction);

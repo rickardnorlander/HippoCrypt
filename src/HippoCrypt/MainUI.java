@@ -10,6 +10,10 @@ import javax.swing.border.LineBorder;
 import util.*;
 
 import java.awt.event.*;
+import java.lang.reflect.InvocationTargetException;
+import java.util.*;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.prefs.Preferences;
 
 
@@ -34,6 +38,10 @@ public class MainUI extends JFrame {
 	private JLabel subjectLabelIn;
 	private JLabel fromLabel;
 	private JPanel welcomePanel;
+	private long slowId = 0;
+	
+	private Set<Long> slowRunning = new HashSet<>();
+	private JProgressBar progressBar;
 
 	/**
 	 * Create the frame.
@@ -54,15 +62,38 @@ public class MainUI extends JFrame {
 		contentPane.add(scrollPane);
 		
 		mailFolderTree = new JTree();
+		mailFolderTree.setModel(new DefaultTreeModel(
+			new DefaultMutableTreeNode("Root") {
+				{
+					add(new DefaultMutableTreeNode("Loading folders..."));
+				}
+			}
+		));
 		mailFolderTree.setRootVisible(false);
 		mailFolderTree.setShowsRootHandles(true);
 		scrollPane.setViewportView(mailFolderTree);
 		mailFolderTree.addMouseListener (new MouseAdapter () {
 			@Override
 			public void mouseClicked (MouseEvent arg0) {
-				TreePath tp = mailFolderTree.getPathForLocation (arg0.getX (), arg0.getY ());
+				final TreePath tp = mailFolderTree.getPathForLocation (arg0.getX (), arg0.getY ());
+				final long id = startSlowThing ();
 				if (tp != null) {
-					showEmailList(MainUI.this.hc.loadSomeHeaders (pathToString(tp)));
+					new SwingWorker<java.util.List<EmailRef>, Object> () {
+						@Override
+						protected List<EmailRef> doInBackground () throws Exception {
+							return MainUI.this.hc.loadSomeHeaders (pathToString(tp));
+						}
+						@Override
+						protected void done () {
+							try {
+								showEmailList(get());
+							} catch (InterruptedException | ExecutionException e) {
+								e.printStackTrace();
+							} finally {
+								finishedSlowThing (id);
+							}
+						}
+					}.execute ();
 				}
 			}
 		});
@@ -79,7 +110,7 @@ public class MainUI extends JFrame {
 		contentPane.add(composeButton);
 		
 		cardPanel = new JPanel();
-		cardPanel.setBounds(156, 11, 477, 387);
+		cardPanel.setBounds(156, 55, 477, 343);
 		contentPane.add(cardPanel);
 		cardPanel.setLayout(new CardLayout(0, 0));
 		
@@ -104,16 +135,16 @@ public class MainUI extends JFrame {
 		showMailPanel.add(fromLabelLabel);
 		
 		JButton forwardButton = new JButton("Forward");
-		forwardButton.setBounds(218, 353, 89, 23);
+		forwardButton.setBounds(218, 288, 89, 23);
 		showMailPanel.add(forwardButton);
 		
 		JScrollPane scrollPane_1 = new JScrollPane();
-		scrollPane_1.setBounds(10, 55, 457, 287);
+		scrollPane_1.setBounds(10, 55, 457, 222);
 		showMailPanel.add(scrollPane_1);
 		
 		bodyIn = new JTextPane();
-		bodyIn.setEditable(false);
 		scrollPane_1.setViewportView(bodyIn);
+		bodyIn.setEditable(false);
 		bodyIn.putClientProperty("html.disable", Boolean.TRUE);
 		
 		dateLabel = new JLabel("Date");
@@ -123,7 +154,7 @@ public class MainUI extends JFrame {
 		
 		
 		JButton replyAllButton = new JButton("Reply all");
-		replyAllButton.setBounds(119, 353, 89, 23);
+		replyAllButton.setBounds(119, 288, 89, 23);
 		showMailPanel.add(replyAllButton);
 		
 		JButton replyButton = new JButton("Reply");
@@ -132,7 +163,7 @@ public class MainUI extends JFrame {
 				showCompose("Re: "+subjectLabelIn.getText (), Quote.quote (bodyIn.getText ()), fromLabel.getText ());
 			}
 		});
-		replyButton.setBounds(20, 353, 89, 23);
+		replyButton.setBounds(20, 288, 89, 23);
 		showMailPanel.add(replyButton);
 		
 		subjectLabelLabel = new JLabel("Subject");
@@ -196,17 +227,21 @@ public class MainUI extends JFrame {
 		composeMailPanel.add(subjectOutField);
 		
 		JScrollPane scrollPane_2 = new JScrollPane();
-		scrollPane_2.setBounds(10, 73, 443, 264);
+		scrollPane_2.setBounds(10, 73, 443, 225);
 		composeMailPanel.add(scrollPane_2);
 		
 		bodyOut = new JEditorPane();
 		scrollPane_2.setViewportView(bodyOut);
 		
 		JButton submitButton = new JButton("Submit");
-		submitButton.setBounds(364, 358, 89, 23);
+		submitButton.setBounds(364, 309, 89, 23);
 		submitButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				hc.sendMail (toField.getText (), subjectOutField.getText (), pgp, bodyOut.getText ());
+				runInThreadWithProgressBar (new Runnable () {
+					@Override public void run () {
+						hc.sendMail (toField.getText (), subjectOutField.getText (), pgp, bodyOut.getText ());
+					}
+				});
 			}
 		});
 		composeMailPanel.add(submitButton);
@@ -217,18 +252,39 @@ public class MainUI extends JFrame {
 		mailListPanel.setLayout(null);
 		
 		emailList = new JList<>();
-		emailList.setBounds(10, 11, 457, 365);
+		emailList.setBounds(10, 11, 457, 321);
 		emailList.setBorder(new LineBorder(new Color(0, 0, 0)));
 		mailListPanel.add(emailList);
 		emailList.putClientProperty("html.disable", Boolean.TRUE);
-		util.SwingLists.addAction (emailList, new AbstractAction () {
+		util.Swing.addActionToList (emailList, new AbstractAction () {
 			@Override
 			public void actionPerformed (ActionEvent e) {
 				JList<EmailRef> list = (JList<EmailRef>) e.getSource ();
-				EmailRef val = (EmailRef) list.getSelectedValue ();
-				showEmail (hc.loadAnEmail (val.folder, val.n));
+				final EmailRef val = (EmailRef) list.getSelectedValue ();
+				final long id = startSlowThing ();
+				new SwingWorker<Email, Object>() {
+					@Override
+					protected Email doInBackground () throws Exception {
+						return hc.loadAnEmail (val.folder, val.n);
+					}
+					@Override
+					public void done () {
+						try {
+							showEmail(get());
+						} catch (InterruptedException | ExecutionException e) {
+							e.printStackTrace();
+						} finally {
+							finishedSlowThing (id);
+						}
+					}
+					
+				}.execute ();
 			}
 		});
+		
+		progressBar = new JProgressBar();
+		progressBar.setBounds(487, 11, 146, 23);
+		contentPane.add(progressBar);
 	}
 
 	public static String pathToString (TreePath tp) {
@@ -261,6 +317,55 @@ public class MainUI extends JFrame {
 		dateLabel.setText ("Date: "+email.sentDate);
 		bodyIn.setText (email.body);
 		((CardLayout)cardPanel.getLayout()).show(cardPanel, "showMailPanel");
+	}
+	
+	public void runInThreadWithProgressBar (final Runnable r) {
+		new Thread () {
+			@Override public void run () {
+				Long id = null;
+				try {
+					id = startSlowThing ();
+					r.run ();
+				} finally {
+					if (id != null)
+						finishedSlowThing (id);
+				}
+			}
+		}.start ();
+	}
+	
+	public void finishedSlowThing(final long id) {
+		try {
+			Swing.runOnEDTNow (new Runnable() {
+				@Override
+				public void run () {
+					if (!slowRunning.remove (id)) {
+						throw new RuntimeException ();
+					}
+					if (slowRunning.isEmpty ())
+						progressBar.setIndeterminate (false);
+				}
+			});
+		} catch (InvocationTargetException | InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public long startSlowThing () {
+		final Wrapper<Long> res = new Wrapper<>();
+		try {
+			Swing.runOnEDTNow (new Runnable() {
+				@Override
+				public void run () {
+					res.t = slowId++;
+					slowRunning.add (res.t);
+					progressBar.setIndeterminate (true);
+				}
+			});
+		} catch (InvocationTargetException | InterruptedException e) {
+			e.printStackTrace();
+		}
+		return res.t;
 	}
 	
 	public void showEmailList (java.util.List<EmailRef> ls) {

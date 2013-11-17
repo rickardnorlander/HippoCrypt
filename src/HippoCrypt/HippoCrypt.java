@@ -1,5 +1,6 @@
 package HippoCrypt;
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.prefs.Preferences;
 import java.util.regex.*;
@@ -316,15 +317,22 @@ public class HippoCrypt {
 	public void doStuff () throws IOException, InterruptedException, MessagingException {
 		Preferences prefs = Preferences.userNodeForPackage(HippoCrypt.class);
 
+		final MainUI window2 = new MainUI (this);
+		window2.setVisible (true);
+		
 		username = getEmail (prefs);
 		gpgdata = getGPGData (username, prefs);
 
+		Long slowId = null;
+		
 		DefaultMutableTreeNode root = null;
 
 		String password_prompt = "Password"; 
 		while (true) {
 			try {
 				final String password = PasswordDialog.askPass(password_prompt);
+				if (slowId == null)
+					slowId = window2.startSlowThing ();
 				if (password == null)
 					return;
 				if (props == null) {
@@ -358,11 +366,17 @@ public class HippoCrypt {
 			}
 			break;
 		}
-		DefaultTreeModel dtm = new DefaultTreeModel (root);
-		MainUI window2 = new MainUI (this);
-		window2.setTreeModel (dtm);
-		window2.setVisible (true);
-
+		final DefaultTreeModel dtm = new DefaultTreeModel (root);
+		try {
+			Swing.runOnEDTNow (new Runnable(){
+				@Override
+				public void run () {
+					window2.setTreeModel (dtm);
+				}});
+		} catch (InvocationTargetException e) {
+			e.printStackTrace();
+		}
+		window2.finishedSlowThing (slowId);
 	}
 
 	public static void main(String[] args) throws IOException, InterruptedException, MessagingException {

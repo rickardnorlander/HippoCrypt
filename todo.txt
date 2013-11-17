@@ -1,12 +1,14 @@
 Todo:
-Run slow things off EDT
 Better initial setup
 Support for attachments
 Support for text/html
 Encrypt subject
 Encrypt attachments
 Caching!
+Make things resizable
+Show more than 10 mails
 
-Keep in mind:
+Keep in mind / done:
 
 Disable all html for risky components
+Run slow things off EDT

@@ -1,3 +1,4 @@
+package HippoCrypt;
 
 public class Email {
 	String from;

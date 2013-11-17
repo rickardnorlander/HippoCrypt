@@ -1,3 +1,4 @@
+package HippoCrypt;
 
 public class EmailRef {
 	public String folder;

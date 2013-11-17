@@ -1,3 +1,4 @@
+package HippoCrypt;
 import java.awt.*;
 
 import javax.swing.*;

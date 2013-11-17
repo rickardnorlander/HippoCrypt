@@ -184,71 +184,71 @@ public class HippoCrypt {
 
 	public void sendMail (String to, String subject, String pubkey, String body) {
 		try {
-		Message message = new MimeMessage(session);
-		message.setFrom(new InternetAddress("rickardnorlander@gmail.com"));
-		message.setRecipients(Message.RecipientType.TO,
-				InternetAddress.parse(to));
-		message.setSubject(subject);
+			Message message = new MimeMessage(session);
+			message.setFrom(new InternetAddress("rickardnorlander@gmail.com"));
+			message.setRecipients(Message.RecipientType.TO,
+					InternetAddress.parse(to));
+			message.setSubject(subject);
 
-		if (pubkey != null) {
+			if (pubkey != null) {
 
-			// Construct encrypted part
-			String cmd = "gpg -ear "+pubkey+" --always-trust --no-default-keyring --keyring HippoCryptPubRing.gpg";
-			final StringBuffer sb = new StringBuffer ();
-			invokeCMD(cmd, body, new MyRunnable<String>() {
-				@Override
-				public void run (String t) {
-					sb.append (t+"\n");
-				}
-			}, null);
+				// Construct encrypted part
+				String cmd = "gpg -ear "+pubkey+" --always-trust --no-default-keyring --keyring HippoCryptPubRing.gpg";
+				final StringBuffer sb = new StringBuffer ();
+				invokeCMD(cmd, body, new MyRunnable<String>() {
+					@Override
+					public void run (String t) {
+						sb.append (t+"\n");
+					}
+				}, null);
 
-			MimeBodyPart pgppart = new MimeBodyPart();
-			pgppart.setContent(sb.toString (), "text/pgp; charset=utf-8");
+				MimeBodyPart pgppart = new MimeBodyPart();
+				pgppart.setContent(sb.toString (), "text/pgp; charset=utf-8");
 
-			// Construct message for incompatible readers
+				// Construct message for incompatible readers
 
-			MimeBodyPart textPart = new MimeBodyPart();
-			textPart.setText("This is an encrypted email sent with HippoCrypt.", "utf-8");
+				MimeBodyPart textPart = new MimeBodyPart();
+				textPart.setText("This is an encrypted email sent with HippoCrypt.", "utf-8");
 
-			// Construct multipart/alternative with the previous parts
+				// Construct multipart/alternative with the previous parts
 
-			Multipart alternative = new MimeMultipart("alternative");
-			alternative.addBodyPart(textPart);
-			alternative.addBodyPart(pgppart);
-			MimeBodyPart alternativeBody = new MimeBodyPart ();
-			alternativeBody.setContent (alternative);
+				Multipart alternative = new MimeMultipart("alternative");
+				alternative.addBodyPart(textPart);
+				alternative.addBodyPart(pgppart);
+				MimeBodyPart alternativeBody = new MimeBodyPart ();
+				alternativeBody.setContent (alternative);
 
-			// Add our public key
+				// Add our public key
 
-			MimeBodyPart attachment = new MimeBodyPart ();
-			attachment.setContent(getArmoredPublicKey (gpgdata.fingerprint), "application/octet-stream");
-			attachment.setFileName ("publickey.asc");
+				MimeBodyPart attachment = new MimeBodyPart ();
+				attachment.setContent(getArmoredPublicKey (gpgdata.fingerprint), "application/octet-stream");
+				attachment.setFileName ("publickey.asc");
 
-			// Create the a multipart/mixed containing message and attachment
+				// Create the a multipart/mixed containing message and attachment
 
-			Multipart outer = new MimeMultipart("mixed");
-			outer.addBodyPart (alternativeBody);
-			outer.addBodyPart (attachment);
+				Multipart outer = new MimeMultipart("mixed");
+				outer.addBodyPart (alternativeBody);
+				outer.addBodyPart (attachment);
 
-			message.setContent(outer);
-		} else {
-			Multipart multiPart = new MimeMultipart("mixed");
+				message.setContent(outer);
+			} else {
+				Multipart multiPart = new MimeMultipart("mixed");
 
-			MimeBodyPart textPart = new MimeBodyPart ();
-			textPart.setText(body, "utf-8");
+				MimeBodyPart textPart = new MimeBodyPart ();
+				textPart.setText(body, "utf-8");
 
-			MimeBodyPart attachment = new MimeBodyPart ();
-			attachment.setContent(getArmoredPublicKey (gpgdata.fingerprint), "application/octet-stream");
-			attachment.setFileName ("publickey.asc");
+				MimeBodyPart attachment = new MimeBodyPart ();
+				attachment.setContent(getArmoredPublicKey (gpgdata.fingerprint), "application/octet-stream");
+				attachment.setFileName ("publickey.asc");
 
-			multiPart.addBodyPart (textPart);
-			multiPart.addBodyPart (attachment);
+				multiPart.addBodyPart (textPart);
+				multiPart.addBodyPart (attachment);
 
-			message.setContent(multiPart);
-		}
+				message.setContent(multiPart);
+			}
 
-		Transport.send(message);
-		System.out.println("Done");
+			Transport.send(message);
+			System.out.println("Done");
 		} catch (MessagingException | IOException | InterruptedException e) {
 		}
 	}
@@ -371,7 +371,7 @@ public class HippoCrypt {
 			ret.subject = m.getSubject ();
 
 			MyMessage mm = parseMessage (m);
-			
+
 			StringBuffer body = new StringBuffer ();
 			for (int i = 0; i < mm.text.size (); ++i) {
 				System.out.println("Part "+i);
@@ -386,6 +386,14 @@ public class HippoCrypt {
 			for (int i = 0; i < mm.attachments.size (); ++i) {
 				if (mm.attachments.get (i).filename.equals ("publickey.asc")) {
 					System.out.println("Has public key!!");
+
+					String key = IOUtils.toString (mm.attachments.get (i).contentStream, "UTF-8");
+					for (Address a: m.getFrom ()) {
+						if (a instanceof InternetAddress) {
+							String fromemail = ((InternetAddress) a).getAddress ();
+							maybeAddPublicKey (fromemail, key);
+						}
+					}
 				}
 			}
 		} catch (IOException | MessagingException | InterruptedException e) {
@@ -398,6 +406,44 @@ public class HippoCrypt {
 			}
 		}
 		return ret;
+	}
+
+	private void maybeAddPublicKey (String fromemail, String key) throws IOException, InterruptedException {
+		Preferences prefs = Preferences.userNodeForPackage(HippoCrypt.class);
+		String prevFingerprint = prefs.get("key-"+fromemail, null);
+//		if (prevFingerprint != null) {
+//			System.out.println(fromemail+" was not updated: already have key");
+//			return;
+//		}
+		final Pattern p1 = Pattern.compile ("key ([A-F0-9]{8}).*imported");
+		final Pattern p2 = Pattern.compile ("key ([A-F0-9]{8}).*not changed");
+		
+		final Wrapper<String> keyidWrap = new Wrapper<String> ();
+
+		invokeCMD("gpg --import --no-default-keyring --keyring HippoCryptPubRing.gpg", key, new MyRunnable<String>() {
+			@Override
+			public void run (String t) {
+			}
+		},
+		new MyRunnable<String>() {
+			@Override
+			public void run (String t) {
+				if (keyidWrap.t == null) {
+    				Matcher m = p1.matcher (t);
+    				if (m.find ()) {
+    						keyidWrap.t = m.group (1);
+    				}
+				}
+				if (keyidWrap.t == null) {
+    				Matcher m = p2.matcher (t);
+    				if (m.find ()) {
+    						keyidWrap.t = m.group (1);
+    				}
+				}
+			}
+		});
+		if (keyidWrap.t != null)
+			prefs.put ("key-"+fromemail, keyidWrap.t);
 	}
 
 	public List<EmailRef> loadSomeHeaders (String folderName) {
@@ -414,15 +460,15 @@ public class HippoCrypt {
 			}
 			int n = f.getMessageCount ();
 			for (int i = Math.max (n-10, 1); i <= n; ++i) {
-    			Message message = f.getMessage (i);
-    			EmailRef a = new EmailRef ();
-    			a.date = message.getSentDate ().toString ();
-    			a.subject = message.getSubject ();
-    			a.from = util.Lists.listToString (Arrays.asList (message.getFrom ()));
-    			a.n = i;
-    			a.folder = folderName;
-    			
-    			ret.add (a);
+				Message message = f.getMessage (i);
+				EmailRef a = new EmailRef ();
+				a.date = message.getSentDate ().toString ();
+				a.subject = message.getSubject ();
+				a.from = util.Lists.listToString (Arrays.asList (message.getFrom ()));
+				a.n = i;
+				a.folder = folderName;
+
+				ret.add (a);
 			}
 			f.close (false);
 		} catch (MessagingException e) {

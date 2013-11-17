@@ -7,10 +7,9 @@ import javax.swing.event.*;
 import javax.swing.tree.*;
 import javax.swing.border.LineBorder;
 
-import util.SwingLists;
+import util.*;
 
-import java.awt.event.ActionListener;
-import java.awt.event.ActionEvent;
+import java.awt.event.*;
 import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.List;
@@ -32,8 +31,10 @@ public class MainUI extends JFrame {
 	private JEditorPane bodyOut;
 	private JList emailList;
 	private JLabel dateLabel;
-	private JLabel lblSubject;
+	private JLabel subjectLabelLabel;
 	private JTextPane bodyIn;
+	private JLabel fromLabelLabel;
+	private JLabel subjectLabelIn;
 	private JLabel fromLabel;
 
 	/**
@@ -58,10 +59,13 @@ public class MainUI extends JFrame {
 		mailFolderTree.setRootVisible(false);
 		mailFolderTree.setShowsRootHandles(true);
 		scrollPane.setViewportView(mailFolderTree);
-		mailFolderTree.addTreeSelectionListener (new TreeSelectionListener() {
+		mailFolderTree.addMouseListener (new MouseAdapter () {
 			@Override
-			public void valueChanged (TreeSelectionEvent arg0) {
-				showEmailList(MainUI.this.hc.loadSomeHeaders (pathToString(arg0.getPath ())));
+			public void mouseClicked (MouseEvent arg0) {
+				TreePath tp = mailFolderTree.getPathForLocation (arg0.getX (), arg0.getY ());
+				if (tp != null) {
+					showEmailList(MainUI.this.hc.loadSomeHeaders (pathToString(tp)));
+				}
 			}
 		});
 		mailFolderTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
@@ -85,9 +89,9 @@ public class MainUI extends JFrame {
 		cardPanel.add(showMailPanel, "showMailPanel");
 		showMailPanel.setLayout(null);
 		
-		fromLabel = new JLabel("From");
-		fromLabel.setBounds(10, 11, 227, 14);
-		showMailPanel.add(fromLabel);
+		fromLabelLabel = new JLabel("From");
+		fromLabelLabel.setBounds(10, 11, 51, 14);
+		showMailPanel.add(fromLabelLabel);
 		
 		JButton forwardButton = new JButton("Forward");
 		forwardButton.setBounds(218, 353, 89, 23);
@@ -103,7 +107,7 @@ public class MainUI extends JFrame {
 		bodyIn.setText("A");
 		
 		dateLabel = new JLabel("Date");
-		dateLabel.setBounds(254, 11, 159, 14);
+		dateLabel.setBounds(254, 11, 161, 14);
 		showMailPanel.add(dateLabel);
 		
 		JButton replyAllButton = new JButton("Reply all");
@@ -111,12 +115,25 @@ public class MainUI extends JFrame {
 		showMailPanel.add(replyAllButton);
 		
 		JButton replyButton = new JButton("Reply");
+		replyButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				showCompose("Re: "+subjectLabelIn.getText (), Quote.quote (bodyIn.getText ()), fromLabel.getText ());
+			}
+		});
 		replyButton.setBounds(20, 353, 89, 23);
 		showMailPanel.add(replyButton);
 		
-		lblSubject = new JLabel("Subject");
-		lblSubject.setBounds(10, 30, 46, 14);
-		showMailPanel.add(lblSubject);
+		subjectLabelLabel = new JLabel("Subject");
+		subjectLabelLabel.setBounds(10, 30, 51, 14);
+		showMailPanel.add(subjectLabelLabel);
+		
+		fromLabel = new JLabel("");
+		fromLabel.setBounds(63, 11, 170, 14);
+		showMailPanel.add(fromLabel);
+		
+		subjectLabelIn = new JLabel("");
+		subjectLabelIn.setBounds(63, 30, 170, 14);
+		showMailPanel.add(subjectLabelIn);
 		
 		JPanel composeMailPanel = new JPanel();
 		composeMailPanel.setBackground(Color.ORANGE);
@@ -211,17 +228,21 @@ public class MainUI extends JFrame {
 		return sb.toString ();
 
 	}
+	
+	public void showCompose (String subjectOut, String bodyOutText, String to) {
+		subjectOutField.setText (subjectOut);
+		bodyOut.setText (bodyOutText);
+		toField.setText (to);
+		((CardLayout)cardPanel.getLayout()).show(cardPanel, "composeMailPanel");
+	}
 
 	public void showCompose () {
-		subjectOutField.setText ("");
-		bodyOut.setText ("");
-		toField.setText ("");
-		((CardLayout)cardPanel.getLayout()).show(cardPanel, "composeMailPanel");
+		showCompose("", "", "");
 	}
 	
 	public void showEmail (Email email) {
-		fromLabel.setText ("From: "+email.from);
-		lblSubject.setText ("Subject: "+email.subject);
+		fromLabel.setText (email.from);
+		subjectLabelIn.setText (email.subject);
 		dateLabel.setText ("Date: "+email.sentDate);
 		bodyIn.setText (email.body);
 		((CardLayout)cardPanel.getLayout()).show(cardPanel, "showMailPanel");

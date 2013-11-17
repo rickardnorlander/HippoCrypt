@@ -199,8 +199,15 @@ public class HippoCrypt {
 					@Override
 					public void run (String t) {
 						sb.append (t+"\n");
+						System.out.println("out "+t);
 					}
-				}, null);
+				}, new MyRunnable<String>() {
+					@Override
+					public void run (String t) {
+						sb.append (t+"\n");
+						System.out.println("err "+t);
+					}
+				});
 
 				MimeBodyPart pgppart = new MimeBodyPart();
 				pgppart.setContent(sb.toString (), "text/pgp; charset=utf-8");
@@ -411,10 +418,10 @@ public class HippoCrypt {
 	private void maybeAddPublicKey (String fromemail, String key) throws IOException, InterruptedException {
 		Preferences prefs = Preferences.userNodeForPackage(HippoCrypt.class);
 		String prevFingerprint = prefs.get("key-"+fromemail, null);
-//		if (prevFingerprint != null) {
-//			System.out.println(fromemail+" was not updated: already have key");
-//			return;
-//		}
+		if (prevFingerprint != null) {
+			System.out.println(fromemail+" was not updated: already have key");
+			return;
+		}
 		final Pattern p1 = Pattern.compile ("key ([A-F0-9]{8}).*imported");
 		final Pattern p2 = Pattern.compile ("key ([A-F0-9]{8}).*not changed");
 		

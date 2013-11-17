@@ -29,7 +29,7 @@ public class MainUI extends JFrame {
 	private String pgp = null;
 	private JLabel encryptionOutStatus;
 	private JEditorPane bodyOut;
-	private JList emailList;
+	private JList<EmailRef> emailList;
 	private JLabel dateLabel;
 	private JLabel subjectLabelLabel;
 	private JTextPane bodyIn;
@@ -207,7 +207,7 @@ public class MainUI extends JFrame {
 		cardPanel.add(mailListPanel, "mailListPanel");
 		mailListPanel.setLayout(null);
 		
-		emailList = new JList();
+		emailList = new JList<>();
 		emailList.setBounds(10, 11, 457, 365);
 		emailList.setBorder(new LineBorder(new Color(0, 0, 0)));
 		mailListPanel.add(emailList);
@@ -215,7 +215,7 @@ public class MainUI extends JFrame {
 		util.SwingLists.addAction (emailList, new AbstractAction () {
 			@Override
 			public void actionPerformed (ActionEvent e) {
-				JList list = (JList) e.getSource ();
+				JList<EmailRef> list = (JList<EmailRef>) e.getSource ();
 				EmailRef val = (EmailRef) list.getSelectedValue ();
 				showEmail (hc.loadAnEmail (val.folder, val.n));
 			}
@@ -255,7 +255,7 @@ public class MainUI extends JFrame {
 	}
 	
 	public void showEmailList (java.util.List<EmailRef> ls) {
-		DefaultListModel lm = new DefaultListModel<> ();
+		DefaultListModel<EmailRef> lm = new DefaultListModel<> ();
 		for (EmailRef s : ls) {
 			lm.addElement (s);
 		}

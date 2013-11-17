@@ -1,7 +1,6 @@
 package HippoCrypt;
 import java.io.*;
 import java.util.*;
-import java.util.concurrent.Callable;
 import java.util.prefs.Preferences;
 import java.util.regex.*;
 
@@ -9,11 +8,7 @@ import javax.mail.*;
 import javax.mail.internet.*;
 import javax.swing.JOptionPane;
 import javax.swing.tree.*;
-import javax.ws.rs.InternalServerErrorException;
-
 import org.apache.commons.io.IOUtils;
-
-import com.sun.mail.util.MailConnectException;
 
 import util.*;
 

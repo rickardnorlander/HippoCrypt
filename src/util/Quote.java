@@ -1,11 +1,8 @@
 package util;
 
 import java.io.*;
-import java.util.regex.*;
 
 public class Quote {
-	private static Pattern p = null;
-
 	public static String quote (String in) {
 		try {
 			BufferedReader bufReader = new BufferedReader (new StringReader (in));

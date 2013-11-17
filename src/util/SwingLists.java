@@ -20,7 +20,6 @@ public abstract class SwingLists {
 				if (evt.getClickCount () >= 2) {
 					Rectangle r = list.getCellBounds (list.getFirstVisibleIndex (), list.getLastVisibleIndex ());
 					if (r != null && r.contains (evt.getPoint ())) {
-						int index = list.locationToIndex (evt.getPoint ());
 						Action action = list.getActionMap ().get (ENTER);
 
 						if (action != null) {

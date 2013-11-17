@@ -8,17 +8,15 @@ import javax.mail.*;
 import javax.mail.internet.*;
 import javax.swing.JOptionPane;
 import javax.swing.tree.*;
+
 import org.apache.commons.io.IOUtils;
 
+import HippoCrypt.GPG.GPGData;
 import util.*;
 
 public class HippoCrypt {
 
-	public static class GPGData {
-		public String fingerprint;
-		public String pass;
-	}
-
+	private static final String PASSWORD = "password";
 	final static String PREF_EMAIL = "email";
 	final static String PREF_GPG_FP = "gpg-fp";
 	final static String PREF_GPG_PASS = "gpg-pass";
@@ -30,15 +28,6 @@ public class HippoCrypt {
 	String username;
 	Properties props = null;
 
-
-	public static boolean isKill (Process p) {
-		try {
-			int t = p.exitValue ();
-			return true;
-		} catch(IllegalThreadStateException e) {
-			return false;
-		}
-	}
 
 	private static String askEmail () {
 		return JOptionPane.showInputDialog("Email"); 
@@ -54,117 +43,12 @@ public class HippoCrypt {
 		return email;
 	}
 
-	public static void invokeCMD (String cmd, String initSend, MyRunnable<String> onOutputLine, MyRunnable<String> onErrorLine) throws IOException, InterruptedException {
-		Process process = Runtime.getRuntime().exec(cmd);
-		InputStream isout = process.getInputStream();
-		InputStream iserr = process.getErrorStream ();
-		OutputStream osin = process.getOutputStream ();
-
-		InputStreamReader isoutr = new InputStreamReader(isout);
-		InputStreamReader iserrr = new InputStreamReader(iserr);
-		OutputStreamWriter osinw = new OutputStreamWriter(osin);
-
-		BufferedReader brout = new BufferedReader(isoutr);
-		BufferedReader brerr = new BufferedReader(iserrr);
-		BufferedWriter bwin = new BufferedWriter(osinw);
-
-		bwin.append (initSend);
-		bwin.close ();
-
-		while(!isKill(process) || brout.ready() || brerr.ready()) {
-			if (brout.ready()) {
-				if (onOutputLine != null)
-					onOutputLine.run(brout.readLine ());
-				continue;
-			}
-			if (brerr.ready()) {
-				if (onErrorLine != null)
-					onErrorLine.run (brerr.readLine ());
-				continue;
-			}
-			Thread.sleep (10);
-		}
-		Thread.sleep (100);
-		while(brout.ready() || brerr.ready()) {
-			if (brout.ready()) {
-				if (onOutputLine != null)
-					onOutputLine.run(brout.readLine ());
-				continue;
-			}
-			if (brerr.ready()) {
-				if (onErrorLine != null)
-					onErrorLine.run (brerr.readLine ());
-				continue;
-			}
-			Thread.sleep (10);
-		}
-		brout.close ();
-		brerr.close ();
-	}
-
-	public static String getArmoredPublicKey (String fingerprint) throws IOException, InterruptedException {
-		final StringBuffer sb = new StringBuffer ();
-		invokeCMD ("gpg --export -a "+fingerprint, "", new MyRunnable<String>() {
-			@Override
-			public void run (String t) {
-				sb.append (t+"\n");
-			}
-		}, null);
-		return sb.toString ();
-	}
-
-	public static GPGData genGPG (String email) throws IOException, InterruptedException {
-		final GPGData ret = new GPGData ();
-		{
-			final Pattern p = Pattern.compile ("gpg: key ([A-F0-9]{8}) marked as ultimately trusted");
-			String text = "%no-protection\n%no-ask-passphrase\nKey-Type:RSA\nKey-Length:4096\nKey-Usage: auth\nSubkey-Type: RSA\nSubkey-Length: 4096\nSubkey-Usage: encrypt\nPassphrase: password\nName-Real:A\nName-Email:a@a.com\n%commit\n%echo done\n";
-			String cmd = "gpg --gen-key --batch";
-
-			invokeCMD(cmd, text,
-					new MyRunnable<String>() {
-				@Override
-				public void run (String line) {
-					System.out.println("out: "+line);
-				}
-			},
-			new MyRunnable<String>() {
-				@Override
-				public void run (String s) {
-					System.out.println(s);
-					Matcher m = p.matcher (s);
-					if (m.matches ())
-						ret.fingerprint = m.group (1);
-				}
-			});
-			ret.pass = "password";
-
-			if (ret.fingerprint == null) {
-				throw new IOException();
-			}
-		}
-
-		String pubkey = getArmoredPublicKey (ret.fingerprint);
-
-		invokeCMD("gpg --import --no-default-keyring --keyring HippoCryptPubRing.gpg", pubkey, new MyRunnable<String>() {
-			@Override
-			public void run (String t) {
-				System.out.println("out: "+t);
-			}
-		},
-		new MyRunnable<String>() {
-			@Override
-			public void run (String t) {
-				System.out.println("err: "+t);
-			}
-		});
-		return ret;
-	}
 
 	public static GPGData getGPGData (String email, Preferences prefs) throws IOException, InterruptedException {
 		GPGData ret = new GPGData ();
 		ret.fingerprint = prefs.get (PREF_GPG_FP, null);
 		if(ret.fingerprint == null) {
-			ret = genGPG (email);
+			ret = GPG.genGPG ("A", "a@a.com", "password");
 			prefs.put (PREF_GPG_FP, ret.fingerprint);
 			prefs.put (PREF_GPG_PASS, ret.pass);
 			prefs.put ("key-"+email, ret.fingerprint);
@@ -188,24 +72,9 @@ public class HippoCrypt {
 			if (pubkey != null) {
 
 				// Construct encrypted part
-				String cmd = "gpg -ear "+pubkey+" --always-trust --no-default-keyring --keyring HippoCryptPubRing.gpg";
-				final StringBuffer sb = new StringBuffer ();
-				invokeCMD(cmd, body, new MyRunnable<String>() {
-					@Override
-					public void run (String t) {
-						sb.append (t+"\n");
-						System.out.println("out "+t);
-					}
-				}, new MyRunnable<String>() {
-					@Override
-					public void run (String t) {
-						sb.append (t+"\n");
-						System.out.println("err "+t);
-					}
-				});
 
 				MimeBodyPart pgppart = new MimeBodyPart();
-				pgppart.setContent(sb.toString (), "text/pgp; charset=utf-8");
+				pgppart.setContent(GPG.encrypt (pubkey, body), "text/pgp; charset=utf-8");
 
 				// Construct message for incompatible readers
 
@@ -223,7 +92,7 @@ public class HippoCrypt {
 				// Add our public key
 
 				MimeBodyPart attachment = new MimeBodyPart ();
-				attachment.setContent(getArmoredPublicKey (gpgdata.fingerprint), "application/octet-stream");
+				attachment.setContent(GPG.getArmoredPublicKey (gpgdata.fingerprint), "application/octet-stream");
 				attachment.setFileName ("publickey.asc");
 
 				// Create the a multipart/mixed containing message and attachment
@@ -240,7 +109,7 @@ public class HippoCrypt {
 				textPart.setText(body, "utf-8");
 
 				MimeBodyPart attachment = new MimeBodyPart ();
-				attachment.setContent(getArmoredPublicKey (gpgdata.fingerprint), "application/octet-stream");
+				attachment.setContent(GPG.getArmoredPublicKey (gpgdata.fingerprint), "application/octet-stream");
 				attachment.setFileName ("publickey.asc");
 
 				multiPart.addBodyPart (textPart);
@@ -281,22 +150,6 @@ public class HippoCrypt {
 		List<String> text;
 		List<Attachment> attachments;
 		List<Boolean> isEncrypted;
-	}
-
-	public String decrypt (String encrypted) throws IOException, InterruptedException {
-		final StringBuffer sb = new StringBuffer ();
-		invokeCMD ("gpg --decrypt --batch --passphrase password", encrypted, new MyRunnable<String>() {
-			@Override
-			public void run (String t) {
-				sb.append (t+"\n");
-			}
-		}, new MyRunnable<String>() {
-			@Override
-			public void run (String t) {
-				System.out.println(t);
-			}
-		});
-		return sb.toString ();
 	}
 
 	/**
@@ -378,7 +231,7 @@ public class HippoCrypt {
 			for (int i = 0; i < mm.text.size (); ++i) {
 				System.out.println("Part "+i);
 				if (mm.isEncrypted.get (i)) {
-					body.append (decrypt(mm.text.get (i)));
+					body.append (GPG.decrypt(mm.text.get (i), PASSWORD));
 				} else {
 					body.append (mm.text.get (i));
 				}
@@ -417,35 +270,9 @@ public class HippoCrypt {
 			System.out.println(fromemail+" was not updated: already have key");
 			return;
 		}
-		final Pattern p1 = Pattern.compile ("key ([A-F0-9]{8}).*imported");
-		final Pattern p2 = Pattern.compile ("key ([A-F0-9]{8}).*not changed");
-		
-		final Wrapper<String> keyidWrap = new Wrapper<String> ();
-
-		invokeCMD("gpg --import --no-default-keyring --keyring HippoCryptPubRing.gpg", key, new MyRunnable<String>() {
-			@Override
-			public void run (String t) {
-			}
-		},
-		new MyRunnable<String>() {
-			@Override
-			public void run (String t) {
-				if (keyidWrap.t == null) {
-    				Matcher m = p1.matcher (t);
-    				if (m.find ()) {
-    						keyidWrap.t = m.group (1);
-    				}
-				}
-				if (keyidWrap.t == null) {
-    				Matcher m = p2.matcher (t);
-    				if (m.find ()) {
-    						keyidWrap.t = m.group (1);
-    				}
-				}
-			}
-		});
-		if (keyidWrap.t != null)
-			prefs.put ("key-"+fromemail, keyidWrap.t);
+		String fingerprint = GPG.importKey (key);
+		if (fingerprint != null)
+			prefs.put ("key-"+fromemail, fingerprint);
 	}
 
 	public List<EmailRef> loadSomeHeaders (String folderName) {

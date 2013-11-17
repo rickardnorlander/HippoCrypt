@@ -10,9 +10,6 @@ import javax.swing.border.LineBorder;
 import util.*;
 
 import java.awt.event.*;
-import java.beans.PropertyChangeListener;
-import java.util.*;
-import java.util.List;
 import java.util.prefs.Preferences;
 
 
@@ -36,6 +33,7 @@ public class MainUI extends JFrame {
 	private JLabel fromLabelLabel;
 	private JLabel subjectLabelIn;
 	private JLabel fromLabel;
+	private JPanel welcomePanel;
 
 	/**
 	 * Create the frame.
@@ -84,6 +82,17 @@ public class MainUI extends JFrame {
 		cardPanel.setBounds(156, 11, 477, 387);
 		contentPane.add(cardPanel);
 		cardPanel.setLayout(new CardLayout(0, 0));
+		
+		welcomePanel = new JPanel();
+		cardPanel.add(welcomePanel, "name_147962662971102");
+		welcomePanel.setLayout(null);
+		
+		JTextPane txtpnhello = new JTextPane();
+		txtpnhello.setContentType("text/html");
+		txtpnhello.setEditable(false);
+		txtpnhello.setText("<html><font size=25>Welcome to HippoCrypt</font><br>Email with privacy</html>");
+		txtpnhello.setBounds(10, 11, 457, 365);
+		welcomePanel.add(txtpnhello);
 		
 		JPanel showMailPanel = new JPanel();
 		showMailPanel.setBackground(Color.BLUE);

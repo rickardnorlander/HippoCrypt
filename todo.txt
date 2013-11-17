@@ -1,2 +1,12 @@
 Todo:
-Remember to disable all html for risky components
+Run slow things off EDT
+Better initial setup
+Support for attachments
+Support for text/html
+Encrypt subject
+Encrypt attachments
+Caching!
+
+Keep in mind:
+
+Disable all html for risky components

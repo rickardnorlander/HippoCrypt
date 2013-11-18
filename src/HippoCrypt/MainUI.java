@@ -50,20 +50,272 @@ public class MainUI extends JFrame {
 		this.hc = _hc;
 		setTitle("HippoCrypt");
 		setDefaultCloseOperation (JFrame.EXIT_ON_CLOSE);
-		setBounds (100, 100, 659, 447);
+		setBounds (100, 100, 857, 617);
 		contentPane = new JPanel ();
 		contentPane.setBackground(Color.GRAY);
 		contentPane.setBorder (new EmptyBorder (5, 5, 5, 5));
 		setContentPane (contentPane);
-		contentPane.setLayout(null);
+		SpringLayout sl_contentPane = new SpringLayout();
+		contentPane.setLayout(sl_contentPane);
+		
+		JPanel topPanel = new JPanel();
+		sl_contentPane.putConstraint(SpringLayout.NORTH, topPanel, -5, SpringLayout.NORTH, contentPane);
+		sl_contentPane.putConstraint(SpringLayout.WEST, topPanel, 0, SpringLayout.WEST, contentPane);
+		sl_contentPane.putConstraint(SpringLayout.SOUTH, topPanel, 29, SpringLayout.NORTH, contentPane);
+		sl_contentPane.putConstraint(SpringLayout.EAST, topPanel, 0, SpringLayout.EAST, contentPane);
+		contentPane.add(topPanel);
+		SpringLayout sl_topPanel = new SpringLayout();
+		topPanel.setLayout(sl_topPanel);
+		
+		JButton button = new JButton("Compose");
+		button.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				showCompose("", "", "");
+			}
+		});
+		sl_topPanel.putConstraint(SpringLayout.NORTH, button, 5, SpringLayout.NORTH, topPanel);
+		sl_topPanel.putConstraint(SpringLayout.WEST, button, 0, SpringLayout.WEST, topPanel);
+		sl_topPanel.putConstraint(SpringLayout.EAST, button, 89, SpringLayout.WEST, topPanel);
+		topPanel.add(button);
+		
+		progressBar = new JProgressBar();
+		sl_topPanel.putConstraint(SpringLayout.NORTH, progressBar, 5, SpringLayout.NORTH, topPanel);
+		sl_topPanel.putConstraint(SpringLayout.SOUTH, progressBar, 28, SpringLayout.NORTH, topPanel);
+		sl_topPanel.putConstraint(SpringLayout.EAST, progressBar, 0, SpringLayout.EAST, topPanel);
+		topPanel.add(progressBar);
+		
+		JSplitPane splitPane = new JSplitPane();
+		sl_contentPane.putConstraint(SpringLayout.NORTH, splitPane, 0, SpringLayout.SOUTH, topPanel);
+		sl_contentPane.putConstraint(SpringLayout.WEST, splitPane, 0, SpringLayout.WEST, topPanel);
+		sl_contentPane.putConstraint(SpringLayout.SOUTH, splitPane, 0, SpringLayout.SOUTH, contentPane);
+		sl_contentPane.putConstraint(SpringLayout.EAST, splitPane, 0, SpringLayout.EAST, contentPane);
+		splitPane.setDividerLocation (160);
+		splitPane.setDividerSize (3);
+		contentPane.add(splitPane);
+		
+		cardPanel = new JPanel();
+		splitPane.setRightComponent(cardPanel);
+		cardPanel.setLayout(new CardLayout(0, 0));
+		
+		welcomePanel = new JPanel();
+		cardPanel.add(welcomePanel, "name_147962662971102");
+		welcomePanel.setLayout(null);
+		
+		JTextPane txtpnhello = new JTextPane();
+		txtpnhello.setContentType("text/html");
+		txtpnhello.setEditable(false);
+		txtpnhello.setText("<html><font size=25>Welcome to HippoCrypt</font><br>Email with privacy</html>");
+		txtpnhello.setBounds(10, 11, 457, 365);
+		welcomePanel.add(txtpnhello);
+		
+		JPanel showMailPanel = new JPanel();
+		showMailPanel.setBackground(Color.GRAY);
+		cardPanel.add(showMailPanel, "showMailPanel");
+		SpringLayout sl_showMailPanel = new SpringLayout();
+		showMailPanel.setLayout(sl_showMailPanel);
+		
+		fromLabelLabel = new JLabel("From");
+		sl_showMailPanel.putConstraint(SpringLayout.NORTH, fromLabelLabel, 11, SpringLayout.NORTH, showMailPanel);
+		sl_showMailPanel.putConstraint(SpringLayout.WEST, fromLabelLabel, 10, SpringLayout.WEST, showMailPanel);
+		sl_showMailPanel.putConstraint(SpringLayout.EAST, fromLabelLabel, 61, SpringLayout.WEST, showMailPanel);
+		showMailPanel.add(fromLabelLabel);
+		
+		JButton forwardButton = new JButton("Forward");
+		sl_showMailPanel.putConstraint(SpringLayout.WEST, forwardButton, 218, SpringLayout.WEST, showMailPanel);
+		sl_showMailPanel.putConstraint(SpringLayout.SOUTH, forwardButton, -10, SpringLayout.SOUTH, showMailPanel);
+		sl_showMailPanel.putConstraint(SpringLayout.EAST, forwardButton, 307, SpringLayout.WEST, showMailPanel);
+		showMailPanel.add(forwardButton);
+		
+		JScrollPane scrollPane_1 = new JScrollPane();
+		sl_showMailPanel.putConstraint(SpringLayout.NORTH, scrollPane_1, 55, SpringLayout.NORTH, showMailPanel);
+		sl_showMailPanel.putConstraint(SpringLayout.WEST, scrollPane_1, 10, SpringLayout.WEST, showMailPanel);
+		sl_showMailPanel.putConstraint(SpringLayout.SOUTH, scrollPane_1, -50, SpringLayout.SOUTH, showMailPanel);
+		sl_showMailPanel.putConstraint(SpringLayout.EAST, scrollPane_1, -10, SpringLayout.EAST, showMailPanel);
+		showMailPanel.add(scrollPane_1);
+		
+		bodyIn = new JTextPane();
+		scrollPane_1.setViewportView(bodyIn);
+		bodyIn.setEditable(false);
+		bodyIn.putClientProperty("html.disable", Boolean.TRUE);
+		
+		dateLabel = new JLabel("Date");
+		sl_showMailPanel.putConstraint(SpringLayout.NORTH, dateLabel, 11, SpringLayout.NORTH, showMailPanel);
+		sl_showMailPanel.putConstraint(SpringLayout.WEST, dateLabel, 254, SpringLayout.WEST, showMailPanel);
+		sl_showMailPanel.putConstraint(SpringLayout.EAST, dateLabel, 415, SpringLayout.WEST, showMailPanel);
+		showMailPanel.add(dateLabel);
+		dateLabel.putClientProperty("html.disable", Boolean.TRUE);
+		
+		
+		JButton replyAllButton = new JButton("Reply all");
+		sl_showMailPanel.putConstraint(SpringLayout.WEST, replyAllButton, 119, SpringLayout.WEST, showMailPanel);
+		sl_showMailPanel.putConstraint(SpringLayout.SOUTH, replyAllButton, -10, SpringLayout.SOUTH, showMailPanel);
+		sl_showMailPanel.putConstraint(SpringLayout.EAST, replyAllButton, 208, SpringLayout.WEST, showMailPanel);
+		showMailPanel.add(replyAllButton);
+		
+		JButton replyButton = new JButton("Reply");
+		sl_showMailPanel.putConstraint(SpringLayout.WEST, replyButton, 20, SpringLayout.WEST, showMailPanel);
+		sl_showMailPanel.putConstraint(SpringLayout.SOUTH, replyButton, -10, SpringLayout.SOUTH, showMailPanel);
+		sl_showMailPanel.putConstraint(SpringLayout.EAST, replyButton, 109, SpringLayout.WEST, showMailPanel);
+		replyButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				showCompose("Re: "+subjectLabelIn.getText (), Quote.quote (bodyIn.getText ()), fromLabel.getText ());
+			}
+		});
+		showMailPanel.add(replyButton);
+		
+		subjectLabelLabel = new JLabel("Subject");
+		sl_showMailPanel.putConstraint(SpringLayout.NORTH, subjectLabelLabel, 30, SpringLayout.NORTH, showMailPanel);
+		sl_showMailPanel.putConstraint(SpringLayout.WEST, subjectLabelLabel, 10, SpringLayout.WEST, showMailPanel);
+		sl_showMailPanel.putConstraint(SpringLayout.EAST, subjectLabelLabel, 61, SpringLayout.WEST, showMailPanel);
+		showMailPanel.add(subjectLabelLabel);
+		
+		fromLabel = new JLabel("");
+		sl_showMailPanel.putConstraint(SpringLayout.NORTH, fromLabel, 11, SpringLayout.NORTH, showMailPanel);
+		sl_showMailPanel.putConstraint(SpringLayout.WEST, fromLabel, 63, SpringLayout.WEST, showMailPanel);
+		sl_showMailPanel.putConstraint(SpringLayout.SOUTH, fromLabel, 25, SpringLayout.NORTH, showMailPanel);
+		sl_showMailPanel.putConstraint(SpringLayout.EAST, fromLabel, 233, SpringLayout.WEST, showMailPanel);
+		showMailPanel.add(fromLabel);
+		fromLabel.putClientProperty("html.disable", Boolean.TRUE);
+		
+		subjectLabelIn = new JLabel("");
+		sl_showMailPanel.putConstraint(SpringLayout.NORTH, subjectLabelIn, 30, SpringLayout.NORTH, showMailPanel);
+		sl_showMailPanel.putConstraint(SpringLayout.WEST, subjectLabelIn, 63, SpringLayout.WEST, showMailPanel);
+		sl_showMailPanel.putConstraint(SpringLayout.SOUTH, subjectLabelIn, 44, SpringLayout.NORTH, showMailPanel);
+		sl_showMailPanel.putConstraint(SpringLayout.EAST, subjectLabelIn, 233, SpringLayout.WEST, showMailPanel);
+		showMailPanel.add(subjectLabelIn);
+		subjectLabelIn.putClientProperty("html.disable", Boolean.TRUE);
+		
+		JPanel composeMailPanel = new JPanel();
+		composeMailPanel.setBackground(Color.ORANGE);
+		cardPanel.add(composeMailPanel, "composeMailPanel");
+		SpringLayout sl_composeMailPanel = new SpringLayout();
+		composeMailPanel.setLayout(sl_composeMailPanel);
+		
+		JLabel toLabel = new JLabel("To");
+		sl_composeMailPanel.putConstraint(SpringLayout.NORTH, toLabel, 14, SpringLayout.NORTH, composeMailPanel);
+		sl_composeMailPanel.putConstraint(SpringLayout.WEST, toLabel, 10, SpringLayout.WEST, composeMailPanel);
+		sl_composeMailPanel.putConstraint(SpringLayout.EAST, toLabel, 56, SpringLayout.WEST, composeMailPanel);
+		composeMailPanel.add(toLabel);
+		
+		toField = new JTextField();
+		sl_composeMailPanel.putConstraint(SpringLayout.NORTH, toField, 11, SpringLayout.NORTH, composeMailPanel);
+		sl_composeMailPanel.putConstraint(SpringLayout.WEST, toField, 64, SpringLayout.WEST, composeMailPanel);
+		sl_composeMailPanel.putConstraint(SpringLayout.EAST, toField, 311, SpringLayout.WEST, composeMailPanel);
+		toField.setColumns(10);
+		toField.getDocument().addDocumentListener(new DocumentListener() {
+			public void changedUpdate(DocumentEvent e) {
+				showCanEncrypt();
+			}
+			public void removeUpdate(DocumentEvent e) {
+				showCanEncrypt();
+			}
+			public void insertUpdate(DocumentEvent e) {
+				showCanEncrypt();
+			}
+
+			public void showCanEncrypt() {
+				String str = toField.getText();
+
+				Preferences prefs = Preferences.userNodeForPackage(HippoCrypt.class);
+				pgp = prefs.get ("key-"+str, null);
+				encryptionOutStatus.setText(pgp == null ? NOT_ENCRYPTED : ENCRYPTED);
+			}
+		});
+		composeMailPanel.add(toField);
+		
+		encryptionOutStatus = new JLabel("Not encrypted");
+		sl_composeMailPanel.putConstraint(SpringLayout.NORTH, encryptionOutStatus, 14, SpringLayout.NORTH, composeMailPanel);
+		sl_composeMailPanel.putConstraint(SpringLayout.WEST, encryptionOutStatus, 373, SpringLayout.WEST, composeMailPanel);
+		sl_composeMailPanel.putConstraint(SpringLayout.EAST, encryptionOutStatus, 474, SpringLayout.WEST, composeMailPanel);
+		composeMailPanel.add(encryptionOutStatus);
+		
+		JLabel subjectLabel = new JLabel("Subject");
+		sl_composeMailPanel.putConstraint(SpringLayout.NORTH, subjectLabel, 39, SpringLayout.NORTH, composeMailPanel);
+		sl_composeMailPanel.putConstraint(SpringLayout.WEST, subjectLabel, 10, SpringLayout.WEST, composeMailPanel);
+		sl_composeMailPanel.putConstraint(SpringLayout.EAST, subjectLabel, 56, SpringLayout.WEST, composeMailPanel);
+		composeMailPanel.add(subjectLabel);
+		
+		subjectOutField = new JTextField();
+		sl_composeMailPanel.putConstraint(SpringLayout.NORTH, subjectOutField, 36, SpringLayout.NORTH, composeMailPanel);
+		sl_composeMailPanel.putConstraint(SpringLayout.WEST, subjectOutField, 64, SpringLayout.WEST, composeMailPanel);
+		sl_composeMailPanel.putConstraint(SpringLayout.EAST, subjectOutField, 311, SpringLayout.WEST, composeMailPanel);
+		subjectOutField.setColumns(10);
+		composeMailPanel.add(subjectOutField);
+		
+		JScrollPane scrollPane_2 = new JScrollPane();
+		sl_composeMailPanel.putConstraint(SpringLayout.NORTH, scrollPane_2, 73, SpringLayout.NORTH, composeMailPanel);
+		sl_composeMailPanel.putConstraint(SpringLayout.WEST, scrollPane_2, 10, SpringLayout.WEST, composeMailPanel);
+		sl_composeMailPanel.putConstraint(SpringLayout.SOUTH, scrollPane_2, -50, SpringLayout.SOUTH, composeMailPanel);
+		sl_composeMailPanel.putConstraint(SpringLayout.EAST, scrollPane_2, -10, SpringLayout.EAST, composeMailPanel);
+		composeMailPanel.add(scrollPane_2);
+		
+		bodyOut = new JEditorPane();
+		scrollPane_2.setViewportView(bodyOut);
+		
+		JButton submitButton = new JButton("Submit");
+		sl_composeMailPanel.putConstraint(SpringLayout.WEST, submitButton, -89, SpringLayout.EAST, composeMailPanel);
+		sl_composeMailPanel.putConstraint(SpringLayout.SOUTH, submitButton, -10, SpringLayout.SOUTH, composeMailPanel);
+		sl_composeMailPanel.putConstraint(SpringLayout.EAST, submitButton, -10, SpringLayout.EAST, composeMailPanel);
+		submitButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				runInThreadWithProgressBar (new Runnable () {
+					@Override public void run () {
+						hc.sendMail (toField.getText (), subjectOutField.getText (), pgp, bodyOut.getText ());
+					}
+				});
+			}
+		});
+		composeMailPanel.add(submitButton);
+		
+		JPanel mailListPanel = new JPanel();
+		mailListPanel.setBackground(Color.GREEN);
+		cardPanel.add(mailListPanel, "mailListPanel");
+		SpringLayout sl_mailListPanel = new SpringLayout();
+		mailListPanel.setLayout(sl_mailListPanel);
+		
+		JScrollPane scrollPane_3 = new JScrollPane();
+		sl_mailListPanel.putConstraint(SpringLayout.NORTH, scrollPane_3, 10, SpringLayout.NORTH, mailListPanel);
+		sl_mailListPanel.putConstraint(SpringLayout.WEST, scrollPane_3, 10, SpringLayout.WEST, mailListPanel);
+		sl_mailListPanel.putConstraint(SpringLayout.SOUTH, scrollPane_3, -10, SpringLayout.SOUTH, mailListPanel);
+		sl_mailListPanel.putConstraint(SpringLayout.EAST, scrollPane_3, -10, SpringLayout.EAST, mailListPanel);
+		mailListPanel.add(scrollPane_3);
+		
+		emailList = new JList<>();
+		scrollPane_3.setViewportView(emailList);
+		emailList.setBorder(new LineBorder(new Color(0, 0, 0)));
+		emailList.putClientProperty("html.disable", Boolean.TRUE);
+		util.Swing.addActionToList (emailList, new AbstractAction () {
+			@Override
+			public void actionPerformed (ActionEvent e) {
+				JList<EmailRef> list = (JList<EmailRef>) e.getSource ();
+				final EmailRef val = (EmailRef) list.getSelectedValue ();
+				final long id = startSlowThing ();
+				new SwingWorker<Email, Object>() {
+					@Override
+					protected Email doInBackground () throws Exception {
+						return hc.loadAnEmail (val.folder, val.n);
+					}
+					@Override
+					public void done () {
+						try {
+							showEmail(get());
+						} catch (InterruptedException | ExecutionException e) {
+							e.printStackTrace();
+						} finally {
+							finishedSlowThing (id);
+						}
+					}
+					
+				}.execute ();
+			}
+		});
 		
 		JScrollPane scrollPane = new JScrollPane();
-		scrollPane.setBounds(10, 55, 135, 343);
-		contentPane.add(scrollPane);
+		splitPane.setLeftComponent(scrollPane);
 		
 		mailFolderTree = new JTree();
 		mailFolderTree.setModel(new DefaultTreeModel(
-			new DefaultMutableTreeNode("Root") {
+			new DefaultMutableTreeNode("JTree") {
 				{
 					add(new DefaultMutableTreeNode("Loading folders..."));
 				}
@@ -99,192 +351,6 @@ public class MainUI extends JFrame {
 		});
 		mailFolderTree.putClientProperty("html.disable", Boolean.TRUE);
 		mailFolderTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
-		
-		JButton composeButton = new JButton("Compose");
-		composeButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				showCompose ();
-			}
-		});
-		composeButton.setBounds(10, 11, 89, 23);
-		contentPane.add(composeButton);
-		
-		cardPanel = new JPanel();
-		cardPanel.setBounds(156, 55, 477, 343);
-		contentPane.add(cardPanel);
-		cardPanel.setLayout(new CardLayout(0, 0));
-		
-		welcomePanel = new JPanel();
-		cardPanel.add(welcomePanel, "name_147962662971102");
-		welcomePanel.setLayout(null);
-		
-		JTextPane txtpnhello = new JTextPane();
-		txtpnhello.setContentType("text/html");
-		txtpnhello.setEditable(false);
-		txtpnhello.setText("<html><font size=25>Welcome to HippoCrypt</font><br>Email with privacy</html>");
-		txtpnhello.setBounds(10, 11, 457, 365);
-		welcomePanel.add(txtpnhello);
-		
-		JPanel showMailPanel = new JPanel();
-		showMailPanel.setBackground(Color.BLUE);
-		cardPanel.add(showMailPanel, "showMailPanel");
-		showMailPanel.setLayout(null);
-		
-		fromLabelLabel = new JLabel("From");
-		fromLabelLabel.setBounds(10, 11, 51, 14);
-		showMailPanel.add(fromLabelLabel);
-		
-		JButton forwardButton = new JButton("Forward");
-		forwardButton.setBounds(218, 288, 89, 23);
-		showMailPanel.add(forwardButton);
-		
-		JScrollPane scrollPane_1 = new JScrollPane();
-		scrollPane_1.setBounds(10, 55, 457, 222);
-		showMailPanel.add(scrollPane_1);
-		
-		bodyIn = new JTextPane();
-		scrollPane_1.setViewportView(bodyIn);
-		bodyIn.setEditable(false);
-		bodyIn.putClientProperty("html.disable", Boolean.TRUE);
-		
-		dateLabel = new JLabel("Date");
-		dateLabel.setBounds(254, 11, 161, 14);
-		showMailPanel.add(dateLabel);
-		dateLabel.putClientProperty("html.disable", Boolean.TRUE);
-		
-		
-		JButton replyAllButton = new JButton("Reply all");
-		replyAllButton.setBounds(119, 288, 89, 23);
-		showMailPanel.add(replyAllButton);
-		
-		JButton replyButton = new JButton("Reply");
-		replyButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				showCompose("Re: "+subjectLabelIn.getText (), Quote.quote (bodyIn.getText ()), fromLabel.getText ());
-			}
-		});
-		replyButton.setBounds(20, 288, 89, 23);
-		showMailPanel.add(replyButton);
-		
-		subjectLabelLabel = new JLabel("Subject");
-		subjectLabelLabel.setBounds(10, 30, 51, 14);
-		showMailPanel.add(subjectLabelLabel);
-		
-		fromLabel = new JLabel("");
-		fromLabel.setBounds(63, 11, 170, 14);
-		showMailPanel.add(fromLabel);
-		fromLabel.putClientProperty("html.disable", Boolean.TRUE);
-		
-		subjectLabelIn = new JLabel("");
-		subjectLabelIn.setBounds(63, 30, 170, 14);
-		showMailPanel.add(subjectLabelIn);
-		subjectLabelIn.putClientProperty("html.disable", Boolean.TRUE);
-		
-		JPanel composeMailPanel = new JPanel();
-		composeMailPanel.setBackground(Color.ORANGE);
-		cardPanel.add(composeMailPanel, "composeMailPanel");
-		composeMailPanel.setLayout(null);
-		
-		JLabel toLabel = new JLabel("To");
-		toLabel.setBounds(10, 14, 46, 14);
-		composeMailPanel.add(toLabel);
-		
-		toField = new JTextField();
-		toField.setColumns(10);
-		toField.setBounds(64, 11, 247, 20);
-		toField.getDocument().addDocumentListener(new DocumentListener() {
-			public void changedUpdate(DocumentEvent e) {
-				showCanEncrypt();
-			}
-			public void removeUpdate(DocumentEvent e) {
-				showCanEncrypt();
-			}
-			public void insertUpdate(DocumentEvent e) {
-				showCanEncrypt();
-			}
-
-			public void showCanEncrypt() {
-				String str = toField.getText();
-
-				Preferences prefs = Preferences.userNodeForPackage(HippoCrypt.class);
-				pgp = prefs.get ("key-"+str, null);
-				encryptionOutStatus.setText(pgp == null ? NOT_ENCRYPTED : ENCRYPTED);
-			}
-		});
-		composeMailPanel.add(toField);
-		
-		encryptionOutStatus = new JLabel("Not encrypted");
-		encryptionOutStatus.setBounds(373, 14, 101, 14);
-		composeMailPanel.add(encryptionOutStatus);
-		
-		JLabel subjectLabel = new JLabel("Subject");
-		subjectLabel.setBounds(10, 39, 46, 14);
-		composeMailPanel.add(subjectLabel);
-		
-		subjectOutField = new JTextField();
-		subjectOutField.setColumns(10);
-		subjectOutField.setBounds(64, 36, 247, 20);
-		composeMailPanel.add(subjectOutField);
-		
-		JScrollPane scrollPane_2 = new JScrollPane();
-		scrollPane_2.setBounds(10, 73, 443, 225);
-		composeMailPanel.add(scrollPane_2);
-		
-		bodyOut = new JEditorPane();
-		scrollPane_2.setViewportView(bodyOut);
-		
-		JButton submitButton = new JButton("Submit");
-		submitButton.setBounds(364, 309, 89, 23);
-		submitButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				runInThreadWithProgressBar (new Runnable () {
-					@Override public void run () {
-						hc.sendMail (toField.getText (), subjectOutField.getText (), pgp, bodyOut.getText ());
-					}
-				});
-			}
-		});
-		composeMailPanel.add(submitButton);
-		
-		JPanel mailListPanel = new JPanel();
-		mailListPanel.setBackground(Color.GREEN);
-		cardPanel.add(mailListPanel, "mailListPanel");
-		mailListPanel.setLayout(null);
-		
-		emailList = new JList<>();
-		emailList.setBounds(10, 11, 457, 321);
-		emailList.setBorder(new LineBorder(new Color(0, 0, 0)));
-		mailListPanel.add(emailList);
-		emailList.putClientProperty("html.disable", Boolean.TRUE);
-		util.Swing.addActionToList (emailList, new AbstractAction () {
-			@Override
-			public void actionPerformed (ActionEvent e) {
-				JList<EmailRef> list = (JList<EmailRef>) e.getSource ();
-				final EmailRef val = (EmailRef) list.getSelectedValue ();
-				final long id = startSlowThing ();
-				new SwingWorker<Email, Object>() {
-					@Override
-					protected Email doInBackground () throws Exception {
-						return hc.loadAnEmail (val.folder, val.n);
-					}
-					@Override
-					public void done () {
-						try {
-							showEmail(get());
-						} catch (InterruptedException | ExecutionException e) {
-							e.printStackTrace();
-						} finally {
-							finishedSlowThing (id);
-						}
-					}
-					
-				}.execute ();
-			}
-		});
-		
-		progressBar = new JProgressBar();
-		progressBar.setBounds(487, 11, 146, 23);
-		contentPane.add(progressBar);
 	}
 
 	public static String pathToString (TreePath tp) {
@@ -305,10 +371,6 @@ public class MainUI extends JFrame {
 		bodyOut.setText (bodyOutText);
 		toField.setText (to);
 		((CardLayout)cardPanel.getLayout()).show(cardPanel, "composeMailPanel");
-	}
-
-	public void showCompose () {
-		showCompose("", "", "");
 	}
 	
 	public void showEmail (Email email) {

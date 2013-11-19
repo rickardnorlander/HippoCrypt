@@ -5,6 +5,10 @@ import java.util.regex.*;
 
 import util.*;
 
+/**
+ * A collection of methods for interfacing with the gpg program.
+ *
+ */
 public abstract class GPG {
 	public static class GPGData {
 		public String fingerprint;

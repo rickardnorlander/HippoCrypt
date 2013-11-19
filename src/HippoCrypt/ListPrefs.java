@@ -2,6 +2,9 @@ package HippoCrypt;
 
 import java.util.prefs.*;
 
+/**
+ * List java preferences. For testing
+ */
 public class ListPrefs {
 	public static void main (String args []) throws BackingStoreException {
 		Preferences p = Preferences.userNodeForPackage (HippoCrypt.class);

@@ -3,6 +3,9 @@ package util;
 import java.io.*;
 
 public class Quote {
+	/**
+	 * Quote an email with ">" arrows 
+	 */
 	public static String quote (String in) {
 		try {
 			BufferedReader bufReader = new BufferedReader (new StringReader (in));

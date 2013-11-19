@@ -6,20 +6,23 @@ import java.util.*;
 
 import util.NullHelper;
 
+/**
+ * A cache for email and email folders. Backed by SQLite
+ */
 public class Cache {
 	private static Cache cache;
-	private File folder;
-	Connection connection;
+	private final File folder;
+	private final Connection connection;
 
-	Statement stmt;
-	PreparedStatement storePS = null;
-	PreparedStatement updateBodyPS = null;
-	PreparedStatement emailForUidPS = null;
-	PreparedStatement largestUidPS = null;
-	PreparedStatement emailsForFolderPS = null;
-	PreparedStatement foldersPS = null;
-	PreparedStatement forgetAllFoldersPS = null;
-	PreparedStatement setFoldersPS = null;
+	private Statement stmt;
+	final private PreparedStatement storePS;
+	final private PreparedStatement updateBodyPS;
+	final private PreparedStatement emailForUidPS;
+	final private PreparedStatement largestUidPS;
+	final private PreparedStatement emailsForFolderPS;
+	final private PreparedStatement foldersPS;
+	final private PreparedStatement forgetAllFoldersPS;
+	final private PreparedStatement setFoldersPS;
 	
 	private Cache () throws ClassNotFoundException, SQLException, IOException {
 		folder = new File (System.getProperty("user.home"), "HippoCrypt");

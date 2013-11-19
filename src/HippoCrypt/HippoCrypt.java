@@ -21,16 +21,16 @@ import util.*;
 public class HippoCrypt {
 
 	private static final String PASSWORD = "password";
-	final static String PREF_EMAIL = "email";
-	final static String PREF_GPG_FP = "gpg-fp";
-	final static String PREF_GPG_PASS = "gpg-pass";
+	private final static String PREF_EMAIL = "email";
+	private final static String PREF_GPG_FP = "gpg-fp";
+	private final static String PREF_GPG_PASS = "gpg-pass";
 
 
-	Session session = null;
-	Store store = null;
-	GPGData gpgdata;
-	String username;
-	Properties props = null;
+	private Session session = null;
+	private Store store = null;
+	private GPGData gpgdata;
+	private String username;
+	private Properties props = null;
 
 
 	private static String askEmail () {
@@ -48,7 +48,7 @@ public class HippoCrypt {
 	}
 
 
-	public static GPGData getGPGData (String email, Preferences prefs) throws IOException, InterruptedException {
+	private static GPGData getGPGData (String email, Preferences prefs) throws IOException, InterruptedException {
 		GPGData ret = new GPGData ();
 		ret.fingerprint = prefs.get (PREF_GPG_FP, null);
 		if(ret.fingerprint == null) {
@@ -128,7 +128,7 @@ public class HippoCrypt {
 		}
 	}
 
-	public void recursiveList (Folder [] fs, String parentName, List<FolderDesc> ret) throws MessagingException {
+	private void recursiveList (Folder [] fs, String parentName, List<FolderDesc> ret) throws MessagingException {
 		for (Folder f : fs) {
 			int type = f.getType ();
 			FolderDesc fd = new FolderDesc ();
@@ -142,12 +142,12 @@ public class HippoCrypt {
 	}
 
 
-	public class Attachment {
+	private class Attachment {
 		String filename;
 		InputStream contentStream;
 	}
 
-	public class MyMessage {
+	private class MyMessage {
 		List<String> text;
 		List<Attachment> attachments;
 		List<Boolean> isEncrypted;
@@ -341,7 +341,6 @@ public class HippoCrypt {
 		Preferences prefs = Preferences.userNodeForPackage(HippoCrypt.class);
 
 		final MainUI window2 = new MainUI (this);
-
 		Cache cache = Cache.getInstance ();
 		window2.setTreeModel (getModelFromFolderDescs (cache.getFolders ()));
 					

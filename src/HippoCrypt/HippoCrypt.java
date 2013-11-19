@@ -1,6 +1,7 @@
 package HippoCrypt;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.prefs.Preferences;
 import java.util.regex.*;
@@ -11,6 +12,8 @@ import javax.swing.JOptionPane;
 import javax.swing.tree.*;
 
 import org.apache.commons.io.IOUtils;
+
+import com.sun.mail.imap.IMAPFolder;
 
 import HippoCrypt.GPG.GPGData;
 import util.*;
@@ -125,20 +128,17 @@ public class HippoCrypt {
 		}
 	}
 
-	public DefaultMutableTreeNode recursiveList (Folder f) throws MessagingException {
-		if (!f.exists ())
-			return null;
-		DefaultMutableTreeNode dmtn = new DefaultMutableTreeNode (f.getName());
-
-		int type = f.getType ();
-		if ((type & Folder.HOLDS_FOLDERS) != 0) {
-			for (Folder sub : f.list ()) {
-				DefaultMutableTreeNode subnode = recursiveList (sub);
-				if (subnode != null)
-					dmtn.add (subnode);
+	public void recursiveList (Folder [] fs, String parentName, List<FolderDesc> ret) throws MessagingException {
+		for (Folder f : fs) {
+			int type = f.getType ();
+			FolderDesc fd = new FolderDesc ();
+			fd.fullNameParent = parentName;
+			fd.fullName = f.getFullName ();
+			ret.add (fd);
+			if ((type & Folder.HOLDS_FOLDERS) != 0) {
+				recursiveList (f.list (), fd.fullName, ret);
 			}
 		}
-		return dmtn;
 	}
 
 
@@ -213,17 +213,17 @@ public class HippoCrypt {
 		return null;
 	}
 
-	public Email loadAnEmail (String folder, int n) {
+	public Email loadAnEmail (String folder, long uid) {
 		Email ret = new Email ();
-		Folder f = null;
+		IMAPFolder f = null;
 		try {
-			f = store.getFolder (folder);
+			f = (IMAPFolder)store.getFolder (folder);
 			f.open (Folder.READ_ONLY);
 
-			Message m = f.getMessage (n);
+			Message m = f.getMessageByUID (uid);
 
 			ret.from = util.Lists.listToString (Arrays.asList (m.getFrom ()));
-			ret.sentDate = m.getSentDate ().toString ();
+			ret.sentDate = m.getSentDate ();
 			ret.subject = m.getSubject ();
 
 			MyMessage mm = parseMessage (m);
@@ -276,32 +276,43 @@ public class HippoCrypt {
 			prefs.put ("key-"+fromemail, fingerprint);
 	}
 
-	public List<EmailRef> loadSomeHeaders (String folderName) {
-		Folder f = null;
-		List<EmailRef> ret = new ArrayList<> ();
+	public List<Email> loadSomeHeaders (String folderName) throws SQLException, ClassNotFoundException, IOException, MessagingException {
+		IMAPFolder f = null;
+		Cache cache = Cache.getInstance ();
 		try {
 
-			f = store.getFolder (folderName);
+			f = (IMAPFolder)store.getFolder (folderName);
 			f.open (Folder.READ_ONLY);
+
 			int mode = f.getMode ();
 			if ((mode & Folder.HOLDS_MESSAGES) == 0) {
 				f.close (false);
-				return ret;
+				return Collections.EMPTY_LIST;
 			}
-			int n = f.getMessageCount ();
-			for (int i = Math.max (n-10, 1); i <= n; ++i) {
-				Message message = f.getMessage (i);
-				EmailRef a = new EmailRef ();
-				a.date = message.getSentDate ().toString ();
-				a.subject = message.getSubject ();
+			
+			long requestFrom = cache.getLargestUid () + 1; // uids start from one
+			long requestTo = f.getUIDNext ();
+			
+			Message [] messages = f.getMessagesByUID (requestFrom, requestTo);
+			
+			
+			List<Email> newEmails = new ArrayList<>();
+			for (Message message : messages) {
+				Email a = new Email ();
+				a.sentDate = message.getSentDate ();
+				a.subject = NullHelper.help (message.getSubject (), "<No subject>");
 				a.from = util.Lists.listToString (Arrays.asList (message.getFrom ()));
-				a.n = i;
 				a.folder = folderName;
+				a.uid = f.getUID (message);
 
-				ret.add (a);
+				newEmails.add (a);
 			}
+			
+			cache.store (newEmails);
+			
 			f.close (false);
-		} catch (MessagingException e) {
+			return cache.getEmailsForFolder (folderName);
+		} finally {
 			try {
 				if (f != null && f.isOpen ()) {
 					f.close (false);
@@ -310,23 +321,38 @@ public class HippoCrypt {
 				e1.printStackTrace();
 			}
 		}
-		return ret;
 	}
 
+	// Assumes we have sorted on fullnameparent
+	private static TreeModel getModelFromFolderDescs (List<FolderDesc> lfd) {
+		HashMap<String, DefaultMutableTreeNode> lm = new HashMap <>();
+		lm.put (null, new DefaultMutableTreeNode ("Root"));
+		for (FolderDesc fd : lfd) {
+			DefaultMutableTreeNode parent = lm.get (fd.fullNameParent);
+			String [] parts = fd.fullName.split ("/");
+			DefaultMutableTreeNode me = new DefaultMutableTreeNode (parts[parts.length-1]);
+			parent.add (me);
+			lm.put(fd.fullName, me);
+		}
+		return new DefaultTreeModel (lm.get (null));
+	}
 
-	public void doStuff () throws IOException, InterruptedException, MessagingException {
+	public void doStuff () throws IOException, InterruptedException, MessagingException, ClassNotFoundException, SQLException {
 		Preferences prefs = Preferences.userNodeForPackage(HippoCrypt.class);
 
 		final MainUI window2 = new MainUI (this);
+
+		Cache cache = Cache.getInstance ();
+		window2.setTreeModel (getModelFromFolderDescs (cache.getFolders ()));
+					
 		window2.setVisible (true);
 		
 		username = getEmail (prefs);
 		gpgdata = getGPGData (username, prefs);
 
 		Long slowId = null;
-		
-		DefaultMutableTreeNode root = null;
 
+		final List<FolderDesc> l = new ArrayList<>();
 		String password_prompt = "Password"; 
 		while (true) {
 			try {
@@ -356,7 +382,8 @@ public class HippoCrypt {
 					store = session.getStore("imaps");
 				if (!store.isConnected ())
 					store.connect("imap.gmail.com", username, password);
-				root = recursiveList (store.getDefaultFolder ());	
+				if (l.isEmpty ())
+					recursiveList (store.getDefaultFolder ().list(), null, l);	
 			} catch (AuthenticationFailedException e) {
 				password_prompt = "Wrong password, try again";
 				session = null;
@@ -366,7 +393,8 @@ public class HippoCrypt {
 			}
 			break;
 		}
-		final DefaultTreeModel dtm = new DefaultTreeModel (root);
+		cache.setFolders (l);
+		final TreeModel dtm = getModelFromFolderDescs (l);
 		try {
 			Swing.runOnEDTNow (new Runnable(){
 				@Override
@@ -379,7 +407,7 @@ public class HippoCrypt {
 		window2.finishedSlowThing (slowId);
 	}
 
-	public static void main(String[] args) throws IOException, InterruptedException, MessagingException {
+	public static void main(String[] args) throws IOException, InterruptedException, MessagingException, ClassNotFoundException, SQLException {
 		HippoCrypt main = new HippoCrypt ();
 		main.doStuff ();
 	}

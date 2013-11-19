@@ -30,7 +30,7 @@ public class MainUI extends JFrame {
 	private String pgp = null;
 	private JLabel encryptionOutStatus;
 	private JEditorPane bodyOut;
-	private JList<EmailRef> emailList;
+	private JList<Email> emailList;
 	private JLabel dateLabel;
 	private JLabel subjectLabelLabel;
 	private JTextPane bodyIn;
@@ -287,13 +287,13 @@ public class MainUI extends JFrame {
 		util.Swing.addActionToList (emailList, new AbstractAction () {
 			@Override
 			public void actionPerformed (ActionEvent e) {
-				JList<EmailRef> list = (JList<EmailRef>) e.getSource ();
-				final EmailRef val = (EmailRef) list.getSelectedValue ();
+				JList<Email> list = (JList<Email>) e.getSource ();
+				final Email val = (Email) list.getSelectedValue ();
 				final long id = startSlowThing ();
 				new SwingWorker<Email, Object>() {
 					@Override
 					protected Email doInBackground () throws Exception {
-						return hc.loadAnEmail (val.folder, val.n);
+						return hc.loadAnEmail (val.folder, val.uid);
 					}
 					@Override
 					public void done () {
@@ -330,9 +330,9 @@ public class MainUI extends JFrame {
 				final TreePath tp = mailFolderTree.getPathForLocation (arg0.getX (), arg0.getY ());
 				if (tp != null) {
 					final long id = startSlowThing ();
-					new SwingWorker<java.util.List<EmailRef>, Object> () {
+					new SwingWorker<java.util.List<Email>, Object> () {
 						@Override
-						protected List<EmailRef> doInBackground () throws Exception {
+						protected List<Email> doInBackground () throws Exception {
 							return MainUI.this.hc.loadSomeHeaders (pathToString(tp));
 						}
 						@Override
@@ -430,9 +430,9 @@ public class MainUI extends JFrame {
 		return res.t;
 	}
 	
-	public void showEmailList (java.util.List<EmailRef> ls) {
-		DefaultListModel<EmailRef> lm = new DefaultListModel<> ();
-		for (EmailRef s : ls) {
+	public void showEmailList (java.util.List<Email> ls) {
+		DefaultListModel<Email> lm = new DefaultListModel<> ();
+		for (Email s : ls) {
 			lm.addElement (s);
 		}
 		emailList.setModel (lm);

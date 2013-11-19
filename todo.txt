@@ -4,8 +4,12 @@ Support for attachments
 Support for text/html
 Encrypt subject
 Encrypt attachments
-Caching!
-Show more than 10 mails
+Support for mail providers other than gmail
+Comments
+Run background stuff in one thread, currently background threads can trip over each other, for instance fetching the same mail twice
+Update ui will fetching mail. Maybe add support for cancelling?
+Uninstaller
+Clean up UI
 
 Keep in mind / done:
 

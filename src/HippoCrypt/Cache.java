@@ -33,10 +33,10 @@ public class Cache {
 		stmt = connection.createStatement ();
 		
 		// body can be null if we haven't fetched it yet
-		stmt.executeUpdate ("CREATE TABLE IF NOT EXISTS Emails (uid bigint PRIMARY KEY NOT NULL, subject text, sentDate integer, body text, folder text)");
-		stmt.executeUpdate ("CREATE TABLE IF NOT EXISTS Folders (name text NOT NULL, parent text)");
+		stmt.executeUpdate ("CREATE TABLE IF NOT EXISTS Emails (uid bigint, subject text, sentDate integer, body text, folder text, CONSTRAINT pk_uidFolder PRIMARY KEY (uid,folder))");
+		stmt.executeUpdate ("CREATE TABLE IF NOT EXISTS Folders (name text PRIMARY KEY, parent text)");
+		stmt.executeUpdate ("CREATE INDEX IF NOT EXISTS uidOnEmails ON Emails (uid)");
 		stmt.executeUpdate ("CREATE INDEX IF NOT EXISTS folderOnEmails ON Emails (folder)");
-		stmt.executeUpdate ("CREATE INDEX IF NOT EXISTS nameOnFolders ON Folders (name)");
 		stmt.executeUpdate ("CREATE INDEX IF NOT EXISTS parentOnFolders ON Folders (parent)");
 		connection.commit ();
 		

@@ -33,21 +33,6 @@ public class HippoCrypt {
 	private Properties props = null;
 
 
-	private static String askEmail () {
-		return JOptionPane.showInputDialog("Email"); 
-	}
-
-	public static String getEmail (Preferences prefs) {
-		String email = prefs.get(PREF_EMAIL, null);
-		if (email != null)
-			return email;
-
-		email = askEmail ();
-		prefs.put (PREF_EMAIL, email);
-		return email;
-	}
-
-
 	private static GPGData getGPGData (String email, Preferences prefs) throws IOException, InterruptedException {
 		GPGData ret = new GPGData ();
 		ret.fingerprint = prefs.get (PREF_GPG_FP, null);
@@ -290,7 +275,7 @@ public class HippoCrypt {
 				return Collections.EMPTY_LIST;
 			}
 			
-			long requestFrom = cache.getLargestUid ("folder") + 1; // uids start from one
+			long requestFrom = cache.getLargestUid (folderName) + 1; // uids start from one
 			long requestTo = f.getUIDNext ();
 
 			Message [] messages = f.getMessagesByUID (requestFrom, requestTo);
@@ -351,8 +336,33 @@ public class HippoCrypt {
 		window2.setTreeModel (getModelFromFolderDescs (cache.getFolders ()));
 					
 		window2.setVisible (true);
+
+		String imapserver = null;
+		username = prefs.get(PREF_EMAIL, null);
+		do {
+			if (username == null) {
+        		username = JOptionPane.showInputDialog("Please enter your email address. Currently only gmail is supported");
+        		prefs.put (PREF_EMAIL, username);
+			}
+    		
+    		
+    		props = System.getProperties();
+    		
+    		if (username.endsWith ("@gmail.com")) {
+        		imapserver = "imap.gmail.com";
+        		props.put("mail.store.protocol", "imaps");
+        		props.put("mail.smtp.auth", "true");
+        		props.put("mail.smtp.starttls.enable", "true");
+        		props.put("mail.smtp.host", "smtp.gmail.com");
+        		props.put("mail.smtp.port", "587");
+        		break;
+    		} else {
+    			username = null;
+    			prefs.remove (PREF_EMAIL);
+    		}
+		} while(username == null);
 		
-		username = getEmail (prefs);
+		
 		gpgdata = getGPGData (username, prefs);
 
 		Long slowId = null;
@@ -366,15 +376,6 @@ public class HippoCrypt {
 					slowId = window2.startSlowThing ();
 				if (password == null)
 					return;
-				if (props == null) {
-					props = System.getProperties();
-
-					props.put("mail.store.protocol", "imaps");
-					props.put("mail.smtp.auth", "true");
-					props.put("mail.smtp.starttls.enable", "true");
-					props.put("mail.smtp.host", "smtp.gmail.com");
-					props.put("mail.smtp.port", "587");
-				}
 				if (session == null) {
 					session = Session.getInstance(props, 
 							new javax.mail.Authenticator() {
@@ -385,8 +386,9 @@ public class HippoCrypt {
 				}
 				if (store == null)
 					store = session.getStore("imaps");
-				if (!store.isConnected ())
-					store.connect("imap.gmail.com", username, password);
+				if (!store.isConnected ()) {
+					store.connect(imapserver, username, password);
+				}
 				if (l.isEmpty ())
 					recursiveList (store.getDefaultFolder ().list(), null, l);	
 			} catch (AuthenticationFailedException e) {

@@ -290,7 +290,7 @@ public class HippoCrypt {
 				return Collections.EMPTY_LIST;
 			}
 			
-			long requestFrom = cache.getLargestUid () + 1; // uids start from one
+			long requestFrom = cache.getLargestUid ("folder") + 1; // uids start from one
 			long requestTo = f.getUIDNext ();
 
 			Message [] messages = f.getMessagesByUID (requestFrom, requestTo);
@@ -306,7 +306,7 @@ public class HippoCrypt {
 			for (Message message : messages) {
 				Email a = new Email ();
 				a.sentDate = message.getSentDate ();
-				a.subject = NullHelper.help (message.getSubject (), "<No subject>");
+				a.subject = message.getSubject ();
 				a.from = util.Lists.listToString (Arrays.asList (message.getFrom ()));
 				a.folder = folderName;
 				a.uid = f.getUID (message);

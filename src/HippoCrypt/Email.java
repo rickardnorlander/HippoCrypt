@@ -2,6 +2,8 @@ package HippoCrypt;
 
 import java.util.Date;
 
+import util.NullHelper;
+
 public class Email {
 	public long uid;
 	public String from;
@@ -12,6 +14,6 @@ public class Email {
 	public String folder;
 	
 	@Override public String toString () {
-		return subject+" "+sentDate;
+		return NullHelper.help (subject, "<No subject>")+" "+NullHelper.help (sentDate, "<No date>");
 	}
 }

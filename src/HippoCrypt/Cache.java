@@ -33,7 +33,7 @@ public class Cache {
 		stmt = connection.createStatement ();
 		
 		// body can be null if we haven't fetched it yet
-		stmt.executeUpdate ("CREATE TABLE IF NOT EXISTS Emails (uid bigint PRIMARY KEY, subject text NOT NULL, sentDate integer NOT NULL, body text, folder text NOT NULL)");
+		stmt.executeUpdate ("CREATE TABLE IF NOT EXISTS Emails (uid bigint PRIMARY KEY NOT NULL, subject text, sentDate integer, body text, folder text)");
 		stmt.executeUpdate ("CREATE TABLE IF NOT EXISTS Folders (name text NOT NULL, parent text)");
 		stmt.executeUpdate ("CREATE INDEX IF NOT EXISTS folderOnEmails ON Emails (folder)");
 		stmt.executeUpdate ("CREATE INDEX IF NOT EXISTS nameOnFolders ON Folders (name)");
@@ -44,7 +44,7 @@ public class Cache {
 		updateBodyPS = connection.prepareStatement ("UPDATE Emails SET body = ? WHERE uid = ?");
 		emailForUidPS = connection.prepareStatement("SELECT * from Emails where uid = ?");
 		emailsForFolderPS = connection.prepareStatement("SELECT * from Emails where folder = ? ORDER BY uid");
-		largestUidPS = connection.prepareStatement("SELECT max(uid) from Emails");
+		largestUidPS = connection.prepareStatement("SELECT max(uid) from Emails where folder = ?");
 		foldersPS = connection.prepareStatement ("SELECT * FROM Folders ORDER BY name");
 		forgetAllFoldersPS = connection.prepareStatement ("DELETE FROM Folders");
 		setFoldersPS = connection.prepareStatement ("INSERT INTO Folders (name, parent) VALUES (?, ?)");
@@ -90,7 +90,8 @@ public class Cache {
 		return ret;
 	}
 	
-	public synchronized long getLargestUid () throws SQLException {
+	public synchronized long getLargestUid (String folder) throws SQLException {
+		largestUidPS.setString(1, folder);
 		ResultSet rs = largestUidPS.executeQuery ();
 		rs.next();
 		long res = rs.getLong (1); // For empty table rs[1] == null so getLong returns zero, which is what we want
@@ -101,7 +102,8 @@ public class Cache {
 		Email ret = new Email ();
 		ret.uid = rs.getLong (1);
 		ret.subject = rs.getString (2);
-		ret.sentDate = new java.util.Date (rs.getLong (3));
+		long longDate = rs.getLong (3);
+		ret.sentDate = rs.wasNull () ? null : new java.util.Date (longDate);
 		ret.body = rs.getString (4);
 		ret.folder = rs.getString (5);
 		return ret;
@@ -118,7 +120,11 @@ public class Cache {
 		for (Email email : emails) {
 			storePS.setLong (1, email.uid);
 			storePS.setString (2, email.subject);
-			storePS.setLong (3, email.sentDate.getTime ());
+			if (email.sentDate != null) {
+				storePS.setLong (3, email.sentDate.getTime ());
+			} else {
+				storePS.setNull (3, Types.BIGINT);
+			}
 			storePS.setString (4, email.body);
 			storePS.setString (5, email.folder);
 			storePS.addBatch ();

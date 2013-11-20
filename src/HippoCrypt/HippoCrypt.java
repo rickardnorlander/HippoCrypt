@@ -292,10 +292,16 @@ public class HippoCrypt {
 			
 			long requestFrom = cache.getLargestUid () + 1; // uids start from one
 			long requestTo = f.getUIDNext ();
-			
+
 			Message [] messages = f.getMessagesByUID (requestFrom, requestTo);
-			
-			
+
+
+			FetchProfile fp = new FetchProfile();
+			fp.add(FetchProfile.Item.ENVELOPE);
+
+			f.fetch (messages, fp);
+
+
 			List<Email> newEmails = new ArrayList<>();
 			for (Message message : messages) {
 				Email a = new Email ();

@@ -3,15 +3,14 @@ Better initial setup
 Support for attachments
 Support for text/html
 Encrypt subject
-Encrypt attachments
 Support for mail providers other than gmail
 Comments
 Run background stuff in one thread, currently background threads can trip over each other, for instance fetching the same mail twice
-Update ui will fetching mail. Maybe add support for cancelling?
+Maybe add support for cancelling slow tasks?
 Uninstaller
 Clean up UI
 
 Keep in mind / done:
 
-Disable all html for risky components
-Run slow things off EDT
+Disable all html for risky swing components
+Run slow things off EDT (EventDispatchThread)

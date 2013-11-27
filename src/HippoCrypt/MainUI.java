@@ -286,7 +286,6 @@ public class MainUI extends JFrame {
 		emailList = new JList<>();
 		scrollPane_3.setViewportView(emailList);
 		emailList.setBorder(new LineBorder(new Color(0, 0, 0)));
-		emailList.putClientProperty("html.disable", Boolean.TRUE);
 		util.Swing.addActionToList (emailList, new AbstractAction () { // Show emails when selected from list
 			@Override
 			public void actionPerformed (ActionEvent e) {

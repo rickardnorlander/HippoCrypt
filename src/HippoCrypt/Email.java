@@ -14,6 +14,7 @@ public class Email {
 	public String folder;
 	
 	@Override public String toString () {
-		return NullHelper.help (subject, "<No subject>")+" "+NullHelper.help (sentDate, "<No date>");
+		String s1 = NullHelper.help (subject, "<No subject>")+" "+NullHelper.help (sentDate, "<No date>");
+		return "<html><body>"+s1.replaceAll ("<", "&lt;").replaceAll (">", "&gt;")+"</body></html>";
 	}
 }

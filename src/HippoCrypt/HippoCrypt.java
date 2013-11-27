@@ -26,6 +26,7 @@ public class HippoCrypt {
 	private final static String PREF_GPG_PASS = "gpg-pass";
 
 
+	ConfStore prefs;
 	private Session session = null;
 	private Store store = null;
 	private GPGData gpgdata;
@@ -33,17 +34,22 @@ public class HippoCrypt {
 	private Properties props = null;
 
 
-	private static GPGData getGPGData (String email, Preferences prefs) throws IOException, InterruptedException {
+	private GPGData getGPGData (String email) throws IOException, InterruptedException {
 		GPGData ret = new GPGData ();
-		ret.fingerprint = prefs.get (PREF_GPG_FP, null);
+		ret.fingerprint = prefs.get (PREF_GPG_FP);
 		if(ret.fingerprint == null) {
 			ret = GPG.genGPG ("A", "a@a.com", "password");
+			
+			prefs.setAutoCommit (false);
 			prefs.put (PREF_GPG_FP, ret.fingerprint);
 			prefs.put (PREF_GPG_PASS, ret.pass);
 			prefs.put ("key-"+email, ret.fingerprint);
+			prefs.commit ();
+			prefs.setAutoCommit (true);
+			
 			return ret;
 		}
-		ret.pass = prefs.get (PREF_GPG_FP, null);
+		ret.pass = prefs.get (PREF_GPG_FP);
 		if (ret.pass == null) {
 			ret.pass = PasswordDialog.askPass();
 		}
@@ -250,8 +256,7 @@ public class HippoCrypt {
 	}
 
 	private void maybeAddPublicKey (String fromemail, String key) throws IOException, InterruptedException {
-		Preferences prefs = Preferences.userNodeForPackage(HippoCrypt.class);
-		String prevFingerprint = prefs.get("key-"+fromemail, null);
+		String prevFingerprint = prefs.get("key-"+fromemail);
 		if (prevFingerprint != null) {
 			System.out.println(fromemail+" was not updated: already have key");
 			return;
@@ -329,16 +334,19 @@ public class HippoCrypt {
 	}
 
 	public void doStuff () throws IOException, InterruptedException, MessagingException, ClassNotFoundException, SQLException {
-		Preferences prefs = Preferences.userNodeForPackage(HippoCrypt.class);
+		File folder = new File (System.getProperty("user.home"), "HippoCrypt");
+		folder.mkdirs ();
+		
+		prefs = new ConfStore(new File(folder, "configuration.props"));
 
-		final MainUI window2 = new MainUI (this);
+		final MainUI window2 = new MainUI (this, prefs);
 		Cache cache = Cache.getInstance ();
 		window2.setTreeModel (getModelFromFolderDescs (cache.getFolders ()));
 					
 		window2.setVisible (true);
 
 		String imapserver = null;
-		username = prefs.get(PREF_EMAIL, null);
+		username = prefs.get(PREF_EMAIL);
 		do {
 			if (username == null) {
         		username = JOptionPane.showInputDialog("Please enter your email address. Currently only gmail is supported");
@@ -363,7 +371,7 @@ public class HippoCrypt {
 		} while(username == null);
 		
 		
-		gpgdata = getGPGData (username, prefs);
+		gpgdata = getGPGData (username);
 
 		Long slowId = null;
 

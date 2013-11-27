@@ -29,6 +29,8 @@ public class HippoCrypt {
 	ConfStore prefs;
 	private Session session = null;
 	private Store store = null;
+	private String storeGuard = "guard"; // For synchronization
+	
 	private GPGData gpgdata;
 	private String username;
 	private Properties props = null;
@@ -207,50 +209,52 @@ public class HippoCrypt {
 	public Email loadAnEmail (String folder, long uid) {
 		Email ret = new Email ();
 		IMAPFolder f = null;
-		try {
-			f = (IMAPFolder)store.getFolder (folder);
-			f.open (Folder.READ_ONLY);
-
-			Message m = f.getMessageByUID (uid);
-
-			ret.from = util.Lists.listToString (Arrays.asList (m.getFrom ()));
-			ret.sentDate = m.getSentDate ();
-			ret.subject = m.getSubject ();
-
-			MyMessage mm = parseMessage (m);
-
-			StringBuffer body = new StringBuffer ();
-			for (int i = 0; i < mm.text.size (); ++i) {
-				System.out.println("Part "+i);
-				if (mm.isEncrypted.get (i)) {
-					body.append (GPG.decrypt(mm.text.get (i), PASSWORD));
-				} else {
-					body.append (mm.text.get (i));
-				}
-				body.append ("\n");
-			}
-			ret.body = body.toString ();
-			for (int i = 0; i < mm.attachments.size (); ++i) {
-				if (mm.attachments.get (i).filename.equals ("publickey.asc")) {
-					System.out.println("Has public key!!");
-
-					String key = IOUtils.toString (mm.attachments.get (i).contentStream, "UTF-8");
-					for (Address a: m.getFrom ()) {
-						if (a instanceof InternetAddress) {
-							String fromemail = ((InternetAddress) a).getAddress ();
-							maybeAddPublicKey (fromemail, key);
-						}
-					}
-				}
-			}
-		} catch (IOException | MessagingException | InterruptedException e) {
-		}
-		if (f != null && f.isOpen ()) {
-			try {
-				f.close (false);
-			} catch (MessagingException e) {
-				e.printStackTrace();
-			}
+		synchronized (storeGuard) {
+    		try {
+    			f = (IMAPFolder)store.getFolder (folder);
+    			f.open (Folder.READ_ONLY);
+    
+    			Message m = f.getMessageByUID (uid);
+    
+    			ret.from = util.Lists.listToString (Arrays.asList (m.getFrom ()));
+    			ret.sentDate = m.getSentDate ();
+    			ret.subject = m.getSubject ();
+    
+    			MyMessage mm = parseMessage (m);
+    
+    			StringBuffer body = new StringBuffer ();
+    			for (int i = 0; i < mm.text.size (); ++i) {
+    				System.out.println("Part "+i);
+    				if (mm.isEncrypted.get (i)) {
+    					body.append (GPG.decrypt(mm.text.get (i), PASSWORD));
+    				} else {
+    					body.append (mm.text.get (i));
+    				}
+    				body.append ("\n");
+    			}
+    			ret.body = body.toString ();
+    			for (int i = 0; i < mm.attachments.size (); ++i) {
+    				if (mm.attachments.get (i).filename.equals ("publickey.asc")) {
+    					System.out.println("Has public key!!");
+    
+    					String key = IOUtils.toString (mm.attachments.get (i).contentStream, "UTF-8");
+    					for (Address a: m.getFrom ()) {
+    						if (a instanceof InternetAddress) {
+    							String fromemail = ((InternetAddress) a).getAddress ();
+    							maybeAddPublicKey (fromemail, key);
+    						}
+    					}
+    				}
+    			}
+    		} catch (IOException | MessagingException | InterruptedException e) {
+    		}
+    		if (f != null && f.isOpen ()) {
+    			try {
+    				f.close (false);
+    			} catch (MessagingException e) {
+    				e.printStackTrace();
+    			}
+    		}
 		}
 		return ret;
 	}
@@ -266,56 +270,58 @@ public class HippoCrypt {
 			prefs.put ("key-"+fromemail, fingerprint);
 	}
 
-	public List<Email> loadSomeHeaders (String folderName) throws SQLException, ClassNotFoundException, IOException, MessagingException {
+	public List<Email> getHeadersForFolder (String folderName) throws SQLException, ClassNotFoundException, IOException, MessagingException {
 		IMAPFolder f = null;
 		Cache cache = Cache.getInstance ();
-		try {
-
-			f = (IMAPFolder)store.getFolder (folderName);
-			f.open (Folder.READ_ONLY);
-
-			int mode = f.getMode ();
-			if ((mode & Folder.HOLDS_MESSAGES) == 0) {
-				f.close (false);
-				return Collections.EMPTY_LIST;
-			}
-			
-			long requestFrom = cache.getLargestUid (folderName) + 1; // uids start from one
-			long requestTo = f.getUIDNext ();
-
-			Message [] messages = f.getMessagesByUID (requestFrom, requestTo);
-
-
-			FetchProfile fp = new FetchProfile();
-			fp.add(FetchProfile.Item.ENVELOPE);
-
-			f.fetch (messages, fp);
-
-
-			List<Email> newEmails = new ArrayList<>();
-			for (Message message : messages) {
-				Email a = new Email ();
-				a.sentDate = message.getSentDate ();
-				a.subject = message.getSubject ();
-				a.from = util.Lists.listToString (Arrays.asList (message.getFrom ()));
-				a.folder = folderName;
-				a.uid = f.getUID (message);
-
-				newEmails.add (a);
-			}
-			
-			cache.store (newEmails);
-			
-			f.close (false);
-			return cache.getEmailsForFolder (folderName);
-		} finally {
-			try {
-				if (f != null && f.isOpen ()) {
-					f.close (false);
-				}
-			} catch (MessagingException e1) {
-				e1.printStackTrace();
-			}
+		synchronized(storeGuard) {
+    		try {
+    
+    			f = (IMAPFolder)store.getFolder (folderName);
+    			f.open (Folder.READ_ONLY);
+    
+    			int mode = f.getMode ();
+    			if ((mode & Folder.HOLDS_MESSAGES) == 0) {
+    				f.close (false);
+    				return Collections.EMPTY_LIST;
+    			}
+    			
+    			long requestFrom = cache.getLargestUid (folderName) + 1; // uids start from one
+    			long requestTo = f.getUIDNext ();
+    
+    			Message [] messages = f.getMessagesByUID (requestFrom, requestTo);
+    
+    
+    			FetchProfile fp = new FetchProfile();
+    			fp.add(FetchProfile.Item.ENVELOPE);
+    
+    			f.fetch (messages, fp);
+    
+    
+    			List<Email> newEmails = new ArrayList<>();
+    			for (Message message : messages) {
+    				Email a = new Email ();
+    				a.sentDate = message.getSentDate ();
+    				a.subject = message.getSubject ();
+    				a.from = util.Lists.listToString (Arrays.asList (message.getFrom ()));
+    				a.folder = folderName;
+    				a.uid = f.getUID (message);
+    
+    				newEmails.add (a);
+    			}
+    			
+    			cache.store (newEmails);
+    			
+    			f.close (false);
+    			return cache.getEmailsForFolder (folderName);
+    		} finally {
+    			try {
+    				if (f != null && f.isOpen ()) {
+    					f.close (false);
+    				}
+    			} catch (MessagingException e1) {
+    				e1.printStackTrace();
+    			}
+    		}
 		}
 	}
 
@@ -342,73 +348,75 @@ public class HippoCrypt {
 		final MainUI window2 = new MainUI (this, prefs);
 		Cache cache = Cache.getInstance ();
 		window2.setTreeModel (getModelFromFolderDescs (cache.getFolders ()));
-					
-		window2.setVisible (true);
-
-		String imapserver = null;
-		username = prefs.get(PREF_EMAIL);
-		do {
-			if (username == null) {
-        		username = JOptionPane.showInputDialog("Please enter your email address. Currently only gmail is supported");
-        		prefs.put (PREF_EMAIL, username);
-			}
-    		
-    		
-    		props = System.getProperties();
-    		
-    		if (username.endsWith ("@gmail.com")) {
-        		imapserver = "imap.gmail.com";
-        		props.put("mail.store.protocol", "imaps");
-        		props.put("mail.smtp.auth", "true");
-        		props.put("mail.smtp.starttls.enable", "true");
-        		props.put("mail.smtp.host", "smtp.gmail.com");
-        		props.put("mail.smtp.port", "587");
-        		break;
-    		} else {
-    			username = null;
-    			prefs.remove (PREF_EMAIL);
-    		}
-		} while(username == null);
-		
-		
-		gpgdata = getGPGData (username);
-
 		Long slowId = null;
-
 		final List<FolderDesc> l = new ArrayList<>();
-		String password_prompt = "Password"; 
-		while (true) {
-			try {
-				final String password = PasswordDialog.askPass(password_prompt);
-				if (slowId == null)
-					slowId = window2.startSlowThing ();
-				if (password == null)
-					return;
-				if (session == null) {
-					session = Session.getInstance(props, 
-							new javax.mail.Authenticator() {
-						protected PasswordAuthentication getPasswordAuthentication() {
-							return new PasswordAuthentication(username, password);
-						}
-					});
-				}
-				if (store == null)
-					store = session.getStore("imaps");
-				if (!store.isConnected ()) {
-					store.connect(imapserver, username, password);
-				}
-				if (l.isEmpty ())
-					recursiveList (store.getDefaultFolder ().list(), null, l);	
-			} catch (AuthenticationFailedException e) {
-				password_prompt = "Wrong password, try again";
-				session = null;
-				continue;
-			} catch (MessagingException e) {
-				throw new RuntimeException(e);
-			}
-			break;
+		
+		synchronized (storeGuard) {
+    		window2.setVisible (true);
+    
+    		String imapserver = null;
+    		username = prefs.get(PREF_EMAIL);
+    		do {
+    			if (username == null) {
+            		username = JOptionPane.showInputDialog("Please enter your email address. Currently only gmail is supported");
+            		prefs.put (PREF_EMAIL, username);
+    			}
+        		
+        		
+        		props = System.getProperties();
+        		
+        		if (username.endsWith ("@gmail.com")) {
+            		imapserver = "imap.gmail.com";
+            		props.put("mail.store.protocol", "imaps");
+            		props.put("mail.smtp.auth", "true");
+            		props.put("mail.smtp.starttls.enable", "true");
+            		props.put("mail.smtp.host", "smtp.gmail.com");
+            		props.put("mail.smtp.port", "587");
+            		break;
+        		} else {
+        			username = null;
+        			prefs.remove (PREF_EMAIL);
+        		}
+    		} while(username == null);
+    		
+    		
+    		gpgdata = getGPGData (username);
+    
+    
+    		String password_prompt = "Password"; 
+    		while (true) {
+    			try {
+    				final String password = PasswordDialog.askPass(password_prompt);
+    				if (slowId == null)
+    					slowId = window2.startSlowThing ();
+    				if (password == null)
+    					return;
+    				if (session == null) {
+    					session = Session.getInstance(props, 
+    							new javax.mail.Authenticator() {
+    						protected PasswordAuthentication getPasswordAuthentication() {
+    							return new PasswordAuthentication(username, password);
+    						}
+    					});
+    				}
+    				if (store == null)
+    					store = session.getStore("imaps");
+    				if (!store.isConnected ()) {
+    					store.connect(imapserver, username, password);
+    				}
+    				if (l.isEmpty ())
+    					recursiveList (store.getDefaultFolder ().list(), null, l);	
+    			} catch (AuthenticationFailedException e) {
+    				password_prompt = "Wrong password, try again";
+    				session = null;
+    				continue;
+    			} catch (MessagingException e) {
+    				throw new RuntimeException(e);
+    			}
+    			break;
+    		}
+    		cache.setFolders (l);
 		}
-		cache.setFolders (l);
 		final TreeModel dtm = getModelFromFolderDescs (l);
 		try {
 			Swing.runOnEDTNow (new Runnable(){

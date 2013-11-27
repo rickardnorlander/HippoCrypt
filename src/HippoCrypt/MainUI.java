@@ -336,7 +336,7 @@ public class MainUI extends JFrame {
 					new SwingWorker<java.util.List<Email>, Object> () {
 						@Override
 						protected List<Email> doInBackground () throws Exception {
-							return MainUI.this.hc.loadSomeHeaders (pathToString(tp));
+							return MainUI.this.hc.getHeadersForFolder (pathToString(tp));
 						}
 						@Override
 						protected void done () {

@@ -12,6 +12,7 @@ import javax.swing.JOptionPane;
 import javax.swing.tree.*;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.output.TeeOutputStream;
 
 import com.sun.mail.imap.IMAPFolder;
 
@@ -342,6 +343,8 @@ public class HippoCrypt {
 	public void doStuff () throws IOException, InterruptedException, MessagingException, ClassNotFoundException, SQLException {
 		File folder = new File (System.getProperty("user.home"), "HippoCrypt");
 		folder.mkdirs ();
+		System.setOut (new PrintStream(new TeeOutputStream (System.out, new FileOutputStream (new File(folder, "stdout.txt")))));
+		System.setErr (new PrintStream(new TeeOutputStream (System.err, new FileOutputStream (new File(folder, "stderr.txt")))));
 		
 		prefs = new ConfStore(new File(folder, "configuration.props"));
 

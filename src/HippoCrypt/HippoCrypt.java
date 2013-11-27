@@ -365,7 +365,6 @@ public class HippoCrypt {
             		prefs.put (PREF_EMAIL, username);
     			}
         		
-        		
         		props = System.getProperties();
         		
         		if (username.endsWith ("@gmail.com")) {
@@ -376,6 +375,14 @@ public class HippoCrypt {
             		props.put("mail.smtp.host", "smtp.gmail.com");
             		props.put("mail.smtp.port", "587");
             		break;
+        		}  else if (username.endsWith ("@hotmail.com")) {
+        			imapserver = "imap-mail.outlook.com";
+        			props.put("mail.store.protocol", "imaps");
+        			props.put("mail.smtp.auth", "true");
+        			props.put("mail.smtp.starttls.enable", "true");
+        			props.put("mail.smtp.host", "smtp-mail.outlook.com");
+        			props.put("mail.smtp.port", "587");
+        			break;
         		} else {
         			username = null;
         			prefs.remove (PREF_EMAIL);

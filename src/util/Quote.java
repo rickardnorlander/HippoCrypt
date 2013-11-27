@@ -18,7 +18,8 @@ public class Quote {
 			}
 			return sb.toString ();
 		} catch (IOException e) {
+			System.out.println("Error with buffered reader in quote()");
+			e.printStackTrace();
 		}
-		throw new RuntimeException ("This cannot happen");
 	}
 }

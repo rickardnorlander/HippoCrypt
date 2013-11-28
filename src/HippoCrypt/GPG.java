@@ -3,6 +3,8 @@ package HippoCrypt;
 import java.io.*;
 import java.util.regex.*;
 
+import javax.swing.JOptionPane;
+
 import util.*;
 
 /**
@@ -36,7 +38,17 @@ public abstract class GPG {
 	}
 
 	public static void invokeCMD (String cmd, String initSend, MyRunnable<String> onOutputLine, MyRunnable<String> onErrorLine) throws IOException, InterruptedException {
-		Process process = Runtime.getRuntime().exec(cmd);
+		Process process = null;
+		try {
+			process = Runtime.getRuntime().exec(cmd);
+		} catch (IOException e){
+			StringWriter sw = new StringWriter();
+			PrintWriter pw = new PrintWriter(sw);
+			e.printStackTrace(pw);
+
+			JOptionPane.showMessageDialog(null, "Fatal error. Maybe you need to install gpg?\n\n"+sw.toString());
+			System.exit(1);
+		}
 		InputStream isout = process.getInputStream();
 		InputStream iserr = process.getErrorStream ();
 		OutputStream osin = process.getOutputStream ();

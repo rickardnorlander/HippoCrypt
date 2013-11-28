@@ -173,7 +173,21 @@ public class HippoCrypt {
 		}
 		if (p.isMimeType("text/plain")) {
 			MyMessage ret = new MyMessage ();
-			ret.text = Collections.singletonList (p.getContent().toString ());
+
+			String text = p.getContent().toString ();
+			text = "<html><body>"+text.replaceAll ("<", "&lt;").replaceAll (">", "&gt;")+"</body></html>";
+			ret.text = Collections.singletonList (text);
+
+			ret.isEncrypted = Collections.singletonList (false);
+			ret.attachments = Collections.EMPTY_LIST;
+			return ret;
+		}
+		if (p.isMimeType("text/html")) {
+			MyMessage ret = new MyMessage ();
+
+			String text = p.getContent().toString ();
+			ret.text = Collections.singletonList (text);
+
 			ret.isEncrypted = Collections.singletonList (false);
 			ret.attachments = Collections.EMPTY_LIST;
 			return ret;

@@ -10,7 +10,9 @@ import javax.swing.border.LineBorder;
 import util.*;
 
 import java.awt.event.*;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.net.*;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -104,13 +106,17 @@ public class MainUI extends JFrame {
 		
 		welcomePanel = new JPanel();
 		cardPanel.add(welcomePanel, "name_147962662971102");
-		welcomePanel.setLayout(null);
+		SpringLayout sl_welcomePanel = new SpringLayout();
+		welcomePanel.setLayout(sl_welcomePanel);
 		
 		JTextPane txtpnhello = new JTextPane();
+		sl_welcomePanel.putConstraint(SpringLayout.NORTH, txtpnhello, 10, SpringLayout.NORTH, welcomePanel);
+		sl_welcomePanel.putConstraint(SpringLayout.WEST, txtpnhello, 10, SpringLayout.WEST, welcomePanel);
+		sl_welcomePanel.putConstraint(SpringLayout.SOUTH, txtpnhello, -10, SpringLayout.SOUTH, welcomePanel);
+		sl_welcomePanel.putConstraint(SpringLayout.EAST, txtpnhello, -10, SpringLayout.EAST, welcomePanel);
 		txtpnhello.setContentType("text/html");
 		txtpnhello.setEditable(false);
 		txtpnhello.setText("<html><font size=25>Welcome to HippoCrypt</font><br>Email with privacy</html>");
-		txtpnhello.setBounds(10, 11, 457, 365);
 		welcomePanel.add(txtpnhello);
 		
 		JPanel showMailPanel = new JPanel();
@@ -139,9 +145,32 @@ public class MainUI extends JFrame {
 		showMailPanel.add(scrollPane_1);
 		
 		bodyIn = new JTextPane();
+		bodyIn.setContentType("text/html");
 		scrollPane_1.setViewportView(bodyIn);
 		bodyIn.setEditable(false);
 		bodyIn.putClientProperty("html.disable", Boolean.TRUE);
+		bodyIn.addHyperlinkListener (new HyperlinkListener () {
+			@Override
+			public void hyperlinkUpdate (HyperlinkEvent e) {
+				if (e.getEventType () == HyperlinkEvent.EventType.ACTIVATED) {
+					try {
+						Desktop desktop = Desktop.isDesktopSupported () ? Desktop.getDesktop () : null;
+						if (desktop != null && desktop.isSupported (Desktop.Action.BROWSE)) {
+							if (e.getURL () != null) {
+								desktop.browse (e.getURL ().toURI ());
+							} else {
+								try {
+									URI uri = new URI ("http://" + e.getDescription ());
+									desktop.browse (uri);
+								} catch (URISyntaxException exception) {}
+							}
+						}
+					} catch (IOException | URISyntaxException e1) {
+						e1.printStackTrace ();
+					}
+				}
+			}
+		});
 		
 		dateLabel = new JLabel("Date");
 		sl_showMailPanel.putConstraint(SpringLayout.NORTH, dateLabel, 11, SpringLayout.NORTH, showMailPanel);

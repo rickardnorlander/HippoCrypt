@@ -1,11 +1,8 @@
 Todo:
 Better initial setup
 Support for attachments
-Support for text/html
 Encrypt subject
-Support for mail providers other than gmail
-Comments
-Run background stuff in one thread, currently background threads can trip over each other, for instance fetching the same mail twice
+Support for more mail providers
 Maybe add support for cancelling slow tasks?
 Uninstaller
 Clean up UI

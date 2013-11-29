@@ -17,6 +17,7 @@ import org.apache.commons.io.output.TeeOutputStream;
 import com.sun.mail.imap.IMAPFolder;
 
 import HippoCrypt.GPG.GPGData;
+import HippoCrypt.MailProvider.RetInfo;
 import util.*;
 
 public class HippoCrypt {
@@ -33,6 +34,7 @@ public class HippoCrypt {
 	private String storeGuard = "guard"; // For synchronization
 	
 	private GPGData gpgdata;
+	private String email;
 	private String username;
 	private Properties props = null;
 
@@ -62,7 +64,7 @@ public class HippoCrypt {
 	public void sendMail (String to, String subject, String pubkey, String body) {
 		try {
 			Message message = new MimeMessage(session);
-			message.setFrom(new InternetAddress(username));
+			message.setFrom(new InternetAddress(email));
 			message.setRecipients(Message.RecipientType.TO,
 					InternetAddress.parse(to));
 			message.setSubject(subject);
@@ -119,6 +121,7 @@ public class HippoCrypt {
 			Transport.send(message);
 			System.out.println("Done");
 		} catch (MessagingException | IOException | InterruptedException e) {
+			e.printStackTrace ();
 		}
 	}
 
@@ -372,33 +375,29 @@ public class HippoCrypt {
     		window2.setVisible (true);
     
     		String imapserver = null;
-    		username = prefs.get(PREF_EMAIL);
+    		email = prefs.get(PREF_EMAIL);
     		do {
-    			if (username == null) {
-            		username = JOptionPane.showInputDialog("Please enter your email address. Currently only a few providers are supported");
-            		prefs.put (PREF_EMAIL, username);
+    			if (email == null) {
+    				email = JOptionPane.showInputDialog("Please enter your email address. Currently only a few providers are supported");
+    				prefs.put (PREF_EMAIL, email);
     			}
-        		
-        		props = System.getProperties();
-        		
-        		MailProvider mp = MailProvider.getProvider (username);
-        		if (mp == null) {
-        			username = null;
-        			prefs.remove (PREF_EMAIL);
-        		} else {
-            		imapserver = mp.imapServer;
-            		props.put("mail.store.protocol", mp.storeProtocol);
-            		props.put("mail.smtp.auth", mp.smtpAuth);
-            		props.put("mail.smtp.starttls.enable", mp.smtpStartTls);
-            		props.put("mail.smtp.host", mp.smtpServer);
-            		props.put("mail.smtp.port", mp.smtpPort);
-            		break;
-        		}
-    		} while(username == null);
-    		
-    		
-    		gpgdata = getGPGData (username);
-    
+
+    			props = System.getProperties();
+
+    			RetInfo ri = MailProvider.getProvider (email, props);
+    			if (ri == null) {
+    				email = null;
+    				prefs.remove (PREF_EMAIL);
+    			} else {
+    				imapserver = ri.imapServer;
+    				username = ri.username;
+    				break;
+    			}
+    		} while(email == null);
+
+
+    		gpgdata = getGPGData (email);
+
     
     		String password_prompt = "Password"; 
     		while (true) {
@@ -415,6 +414,7 @@ public class HippoCrypt {
     							return new PasswordAuthentication(username, password);
     						}
     					});
+    					session.setDebug (true);
     				}
     				if (store == null)
     					store = session.getStore("imaps");

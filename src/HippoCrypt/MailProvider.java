@@ -3,28 +3,40 @@ package HippoCrypt;
 import java.util.Properties;
 
 public class MailProvider {
-	public String imapServer;
-	public String storeProtocol;
-	public String smtpAuth;
-	public String smtpStartTls;
-	public String smtpServer;
-	public String smtpPort;
-
-	private MailProvider (String imapServer, String storeProtocol, String smtpAuth, String smtpStartTls, String smtpServer, String smtpPort) {
-		this.imapServer = imapServer;
-		this.storeProtocol = storeProtocol;
-		this.smtpAuth = smtpAuth;
-		this.smtpStartTls = smtpStartTls;
-		this.smtpServer = smtpServer;
-		this.smtpPort = smtpPort;
+	public static class RetInfo {
+		public String imapServer;
+		public String username;
+		public RetInfo (String imapServer, String username) {
+			this.imapServer = imapServer;
+			this.username = username;
+		}
 	}
 
-	public static MailProvider getProvider (String email) {        
+	public static RetInfo getProvider (String email, Properties props) {
 		if (email.endsWith ("@gmail.com")) {
-    		return new MailProvider ("imap.gmail.com",  "imaps",  "true", "true", "smtp.gmail.com", "587");
+			props.put("mail.store.protocol", "imaps");
+			props.put("mail.smtp.auth", "true");
+			props.put("mail.smtp.starttls.enable", "true");
+			props.put("mail.smtp.host", "smtp.gmail.com");
+			props.put("mail.smtp.port", "587");
+			return new RetInfo ("imap.gmail.com", email);
 		}
 		if (email.endsWith ("@hotmail.com")) {
-    		return new MailProvider ("imap-mail.outlook.com",  "imaps",  "true", "true", "smtp-mail.outlook.com", "587");
+			props.put("mail.store.protocol", "imaps");
+			props.put("mail.smtp.auth", "true");
+			props.put("mail.smtp.starttls.enable", "true");
+			props.put("mail.smtp.host", "smtp-mail.outlook.com");
+			props.put("mail.smtp.port", "587");
+			return new RetInfo ("imap-mail.outlook.com", email);
+		}
+		if (email.endsWith ("@kth.se")) {
+			props.put("mail.store.protocol", "imaps");
+			props.put("mail.transport.protocol", "smtps");
+			props.put("mail.smtp.auth", "true");
+			props.put("mail.smtp.ssl.enable", "true");
+			props.put("mail.smtp.host", "smtp.kth.se");
+			props.put("mail.smtp.port", "465");
+			return new RetInfo ("webmail.kth.se", email.substring (0, email.length () - 7));
 		}
 		return null;
 	}

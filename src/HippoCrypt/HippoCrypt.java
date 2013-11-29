@@ -375,31 +375,24 @@ public class HippoCrypt {
     		username = prefs.get(PREF_EMAIL);
     		do {
     			if (username == null) {
-            		username = JOptionPane.showInputDialog("Please enter your email address. Currently only gmail is supported");
+            		username = JOptionPane.showInputDialog("Please enter your email address. Currently only a few providers are supported");
             		prefs.put (PREF_EMAIL, username);
     			}
         		
         		props = System.getProperties();
         		
-        		if (username.endsWith ("@gmail.com")) {
-            		imapserver = "imap.gmail.com";
-            		props.put("mail.store.protocol", "imaps");
-            		props.put("mail.smtp.auth", "true");
-            		props.put("mail.smtp.starttls.enable", "true");
-            		props.put("mail.smtp.host", "smtp.gmail.com");
-            		props.put("mail.smtp.port", "587");
-            		break;
-        		}  else if (username.endsWith ("@hotmail.com")) {
-        			imapserver = "imap-mail.outlook.com";
-        			props.put("mail.store.protocol", "imaps");
-        			props.put("mail.smtp.auth", "true");
-        			props.put("mail.smtp.starttls.enable", "true");
-        			props.put("mail.smtp.host", "smtp-mail.outlook.com");
-        			props.put("mail.smtp.port", "587");
-        			break;
-        		} else {
+        		MailProvider mp = MailProvider.getProvider (username);
+        		if (mp == null) {
         			username = null;
         			prefs.remove (PREF_EMAIL);
+        		} else {
+            		imapserver = mp.imapServer;
+            		props.put("mail.store.protocol", mp.storeProtocol);
+            		props.put("mail.smtp.auth", mp.smtpAuth);
+            		props.put("mail.smtp.starttls.enable", mp.smtpStartTls);
+            		props.put("mail.smtp.host", mp.smtpServer);
+            		props.put("mail.smtp.port", mp.smtpPort);
+            		break;
         		}
     		} while(username == null);
     		

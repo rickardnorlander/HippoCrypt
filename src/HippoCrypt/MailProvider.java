@@ -38,6 +38,13 @@ public class MailProvider {
 			props.put("mail.smtp.port", "465");
 			return new RetInfo ("webmail.kth.se", email.substring (0, email.length () - 7));
 		}
+		if (email.endsWith ("@yahoo.com")) {
+			props.put("mail.store.protocol", "imaps");
+			props.put("mail.smtp.auth", "true");
+			props.put("mail.smtp.host", "smtp.mail.yahoo.com");
+			props.put("mail.smtp.port", "587");
+			return new RetInfo ("imap.mail.yahoo.com", email);
+		}
 		return null;
 	}
 

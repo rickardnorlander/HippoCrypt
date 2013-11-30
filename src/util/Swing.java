@@ -2,6 +2,7 @@ package util;
 
 import java.awt.Rectangle;
 import java.awt.event.*;
+import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 
 import javax.swing.*;
@@ -16,7 +17,15 @@ public abstract class Swing {
 			SwingUtilities.invokeAndWait (r);
 		}
 	}
-	
+
+	public static void showException (String text, Exception e) {
+		StringWriter sw = new StringWriter();
+		PrintWriter pw = new PrintWriter(sw);
+		e.printStackTrace(pw);
+
+		JOptionPane.showMessageDialog(null, text + "\n\n"+sw.toString());
+	}
+
 	public static void addActionToList (final JList<?> list, Action performAction) {
 		InputMap im = list.getInputMap ();
 		im.put (ENTER, ENTER);

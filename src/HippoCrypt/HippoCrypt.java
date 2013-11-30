@@ -3,8 +3,6 @@ import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.SQLException;
 import java.util.*;
-import java.util.prefs.Preferences;
-import java.util.regex.*;
 
 import javax.mail.*;
 import javax.mail.internet.*;
@@ -17,6 +15,7 @@ import org.apache.commons.io.output.TeeOutputStream;
 import com.sun.mail.imap.IMAPFolder;
 
 import HippoCrypt.GPG.GPGData;
+import HippoCrypt.GPG.GPGException;
 import HippoCrypt.MailProvider.RetInfo;
 import util.*;
 
@@ -39,7 +38,7 @@ public class HippoCrypt {
 	private Properties props = null;
 
 
-	private GPGData getGPGData (String email) throws IOException, InterruptedException {
+	private GPGData getGPGData (String email) throws GPGException, IOException {
 		GPGData ret = new GPGData ();
 		ret.fingerprint = prefs.get (PREF_GPG_FP);
 		if(ret.fingerprint == null) {
@@ -120,7 +119,8 @@ public class HippoCrypt {
 
 			Transport.send(message);
 			System.out.println("Done");
-		} catch (MessagingException | IOException | InterruptedException e) {
+		} catch (MessagingException | GPGException e) {
+			Swing.showException ("Failed to send email", e);
 			e.printStackTrace ();
 		}
 	}
@@ -264,7 +264,9 @@ public class HippoCrypt {
     					}
     				}
     			}
-    		} catch (IOException | MessagingException | InterruptedException e) {
+    		} catch (IOException | MessagingException | GPGException e) {
+    			Swing.showException ("Failed to load email", e);
+    			e.printStackTrace ();
     		}
     		if (f != null && f.isOpen ()) {
     			try {
@@ -277,7 +279,7 @@ public class HippoCrypt {
 		return ret;
 	}
 
-	private void maybeAddPublicKey (String fromemail, String key) throws IOException, InterruptedException {
+	private void maybeAddPublicKey (String fromemail, String key) throws GPGException, IOException {
 		String prevFingerprint = prefs.get("key-"+fromemail);
 		if (prevFingerprint != null) {
 			System.out.println(fromemail+" was not updated: already have key");
@@ -396,9 +398,14 @@ public class HippoCrypt {
     		} while(email == null);
 
 
-    		gpgdata = getGPGData (email);
+    		try {
+    			gpgdata = getGPGData (email);
+    		} catch (GPGException e) {
+    			Swing.showException ("Failed to get keypair. Maybe you need to install gpg?", e);
+    			e.printStackTrace ();
+    			System.exit (1);
+    		}
 
-    
     		String password_prompt = "Password"; 
     		while (true) {
     			try {

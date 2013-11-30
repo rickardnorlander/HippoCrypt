@@ -214,7 +214,7 @@ public abstract class GPG {
 	public static String decrypt (String encrypted, String password) throws GPGException {
 		final StringBuffer sb = new StringBuffer ();
 		try {
-			invokeCMD ("gpg --decrypt --batch --passphrase " + password, encrypted, new MyRunnable<String>() {
+			invokeCMD ("gpg --decrypt --batch --passphrase-fd 0", "password\n"+encrypted, new MyRunnable<String>() {
 				@Override
 				public void run (String t) {
 					sb.append (t+"\n");

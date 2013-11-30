@@ -125,16 +125,15 @@ public class HippoCrypt {
 		}
 	}
 
-	private void recursiveList (Folder [] fs, String parentName, List<FolderDesc> ret) throws MessagingException {
+	private void recursiveList (Folder [] fs, List<FolderDesc> ret) throws MessagingException {
 		for (Folder f : fs) {
 			int type = f.getType ();
 			FolderDesc fd = new FolderDesc ();
-			fd.fullNameParent = parentName;
 			fd.fullName = f.getFullName ();
+			Folder parent = f.getParent ();
+			if (parent != null && !parent.getFullName ().isEmpty ())
+				fd.fullNameParent = parent.getFullName ();
 			ret.add (fd);
-			if ((type & Folder.HOLDS_FOLDERS) != 0) {
-				recursiveList (f.list (), fd.fullName, ret);
-			}
 		}
 	}
 
@@ -429,7 +428,7 @@ public class HippoCrypt {
     					store.connect(imapserver, username, password);
     				}
     				if (l.isEmpty ())
-    					recursiveList (store.getDefaultFolder ().list(), null, l);	
+    					recursiveList (store.getDefaultFolder ().list("*"), l);
     			} catch (AuthenticationFailedException e) {
     				password_prompt = "Wrong password, try again";
     				session = null;

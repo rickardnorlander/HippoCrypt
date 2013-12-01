@@ -251,7 +251,7 @@ public abstract class GPG {
 
 	public static String encrypt (String pubkey, String cleartext) throws GPGException {
 		// Construct encrypted part
-		String [] cmd = new String []{"gpg", "-ear", "pubkey", "--always-trust", "--no-default-keyring", "--keyring", "HippoCryptPubRing.gpg"};
+		String [] cmd = new String []{"gpg", "-ear", pubkey, "--always-trust", "--no-default-keyring", "--keyring", "HippoCryptPubRing.gpg"};
 		final StringBuffer sb = new StringBuffer ();
 		try {
 			invokeCMD(cmd, cleartext, new MyRunnable<String>() {

@@ -67,9 +67,32 @@ public class HippoCrypt {
 			message.setFrom(new InternetAddress(email));
 			message.setRecipients(Message.RecipientType.TO,
 					InternetAddress.parse(to));
-			message.setSubject(subject);
 
 			if (pubkey != null) {
+				message.setSubject("HippoCrypt encrypted email");
+				String encSubject = GPG.encrypt (pubkey, subject);
+
+				// Strip the pgp headers
+				int ind1 = encSubject.indexOf ('\n');
+				if (ind1 == -1) {
+					throw new RuntimeException ();
+				}
+				int ind2 = encSubject.indexOf ('\n', ind1+1);
+				if (ind2 == -1) {
+					throw new RuntimeException ();
+				}
+				int lastInd = encSubject.lastIndexOf ('\n');
+				if (lastInd == -1) {
+					throw new RuntimeException ();
+				}
+				int lastInd2 = encSubject.lastIndexOf ('\n', lastInd-1);
+				if (lastInd2 == -1) {
+					throw new RuntimeException ();
+				}
+				encSubject = encSubject.substring (ind2+2, lastInd2);
+				encSubject = encSubject.replaceAll ("\n", "");
+
+				message.setHeader ("PGP-Subject", encSubject);
 
 				// Construct encrypted part
 
@@ -124,6 +147,7 @@ public class HippoCrypt {
 
 				message.setContent(outer);
 			} else {
+				message.setSubject(subject);
 				Multipart multiPart = new MimeMultipart("mixed");
 
 				MimeBodyPart textPart = new MimeBodyPart ();
@@ -265,7 +289,7 @@ public class HippoCrypt {
     
     			ret.from = util.Lists.listToString (Arrays.asList (m.getFrom ()));
     			ret.sentDate = m.getSentDate ();
-    			ret.subject = m.getSubject ();
+    			ret.subject = getSubjectFromMessage (m);
     
     			MyMessage mm = parseMessage (m);
     
@@ -342,6 +366,7 @@ public class HippoCrypt {
     
     			FetchProfile fp = new FetchProfile();
     			fp.add(FetchProfile.Item.ENVELOPE);
+    			fp.add ("PGP-Subject");
     
     			f.fetch (messages, fp);
     
@@ -350,7 +375,7 @@ public class HippoCrypt {
     			for (Message message : messages) {
     				Email a = new Email ();
     				a.sentDate = message.getSentDate ();
-    				a.subject = message.getSubject ();
+    				a.subject = getSubjectFromMessage (message);
     				a.from = util.Lists.listToString (Arrays.asList (message.getFrom ()));
     				a.folder = folderName;
     				a.uid = f.getUID (message);
@@ -372,6 +397,20 @@ public class HippoCrypt {
     			}
     		}
 		}
+	}
+
+	private String getSubjectFromMessage (Message message) throws MessagingException {
+		String s = message.getSubject ();
+		String [] pgpSubject = message.getHeader ("PGP-Subject");
+		if (pgpSubject != null && pgpSubject.length > 0) {
+			try {
+				s = GPG.decrypt ("-----BEGIN PGP MESSAGE-----\n\n\n"+pgpSubject[0]+"\n-----END PGP MESSAGE-----", PASSWORD);
+			} catch (GPGException e) {
+				e.printStackTrace ();
+				// I think we want to just print a trace and go on, but idk
+			}
+		}
+		return s;
 	}
 
 	// Assumes we have sorted on fullnameparent

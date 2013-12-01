@@ -24,9 +24,9 @@ public class PasswordDialog {
 			}
 		});
 		dialog.setVisible(true);
-		int result = (Integer)jop.getValue();
+		Integer result = (Integer)jop.getValue();
 		dialog.dispose();
-		if(result == JOptionPane.OK_OPTION){
+		if(result != null && ((int)result) == JOptionPane.OK_OPTION){
 			return new String (jpf.getPassword());
 		}
 		return null;

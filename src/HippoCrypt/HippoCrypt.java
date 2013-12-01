@@ -478,10 +478,10 @@ public class HippoCrypt {
     		while (true) {
     			try {
     				final String password = PasswordDialog.askPass(password_prompt);
+    				if (password == null)
+    					System.exit (0);
     				if (slowId == null)
     					slowId = window2.startSlowThing ();
-    				if (password == null)
-    					return;
     				if (session == null) {
     					session = Session.getInstance(props, 
     							new javax.mail.Authenticator() {

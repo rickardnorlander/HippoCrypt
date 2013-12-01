@@ -9,7 +9,6 @@ Clean up UI
 Show message when gathering entropy
 Handle deleted messages somehow
 Fix encodings
-Use process builder, more robust
 
 Keep in mind / done:
 

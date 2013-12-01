@@ -50,7 +50,7 @@ public abstract class GPG {
 	public static String getArmoredPublicKey (String fingerprint) throws GPGException {
 		final StringBuffer sb = new StringBuffer ();
 		try {
-			invokeCMD ("gpg --export -a "+fingerprint, "", new MyRunnable<String>() {
+			invokeCMD (new String []{"gpg", "--export", "-a", fingerprint}, "", new MyRunnable<String>() {
 				@Override
 				public void run (String t) {
 					sb.append (t+"\n");
@@ -65,10 +65,11 @@ public abstract class GPG {
 		return ret;
 	}
 
-	private static void invokeCMD (String cmd, String initSend, MyRunnable<String> onOutputLine, MyRunnable<String> onErrorLine) throws GPGException {
+	private static void invokeCMD (String [] cmd, String initSend, MyRunnable<String> onOutputLine, MyRunnable<String> onErrorLine) throws GPGException {
 		Process process = null;
 		try {
-			process = Runtime.getRuntime().exec(cmd);
+			ProcessBuilder pb = new ProcessBuilder (cmd);
+			process = pb.start ();
 			InputStream isout = process.getInputStream();
 			InputStream iserr = process.getErrorStream ();
 			OutputStream osin = process.getOutputStream ();
@@ -123,10 +124,9 @@ public abstract class GPG {
 		final GPGData ret = new GPGData ();
 		final Pattern p = Pattern.compile ("gpg: key ([A-F0-9]{8}) marked as ultimately trusted");
 		String text = "%no-protection\n%no-ask-passphrase\nKey-Type:RSA\nKey-Length:4096\nKey-Usage: auth\nSubkey-Type: RSA\nSubkey-Length: 4096\nSubkey-Usage: encrypt\nPassphrase: "+password+"\nName-Real:"+name+"\nName-Email:"+email+"\n%commit\n%echo done\n";
-		String cmd = "gpg --gen-key --batch";
 
 		try {
-			invokeCMD(cmd, text,
+			invokeCMD(new String[]{"gpg", "--gen-key", "--batch"}, text,
 					new MyRunnable<String>() {
 				@Override
 				public void run (String line) {
@@ -153,7 +153,7 @@ public abstract class GPG {
 		String pubkey = getArmoredPublicKey (ret.fingerprint);
 
 		try {
-			invokeCMD("gpg --import --no-default-keyring --keyring HippoCryptPubRing.gpg", pubkey, new MyRunnable<String>() {
+			invokeCMD(new String []{"gpg", "--import", "--no-default-keyring", "--keyring", "HippoCryptPubRing.gpg"}, pubkey, new MyRunnable<String>() {
 				@Override
 				public void run (String t) {
 					System.out.println("out: "+t);
@@ -180,7 +180,7 @@ public abstract class GPG {
 
 		final Wrapper<String> keyidWrap = new Wrapper<String> ();
 		try {
-			invokeCMD("gpg --import --no-default-keyring --keyring HippoCryptPubRing.gpg", key, new MyRunnable<String>() {
+			invokeCMD(new String []{"gpg", "--import", "--no-default-keyring", "--keyring", "HippoCryptPubRing.gpg"}, key, new MyRunnable<String>() {
 				@Override
 				public void run (String t) {
 				}
@@ -214,7 +214,8 @@ public abstract class GPG {
 	public static String decrypt (String encrypted, String password) throws GPGException {
 		final StringBuffer sb = new StringBuffer ();
 		try {
-			invokeCMD ("gpg --decrypt --batch --passphrase-fd 0", "password\n"+encrypted, new MyRunnable<String>() {
+			System.out.println(encrypted);
+			invokeCMD (new String []{"gpg", "--decrypt", "--batch", "--passphrase-fd", "0"}, "password\n"+encrypted, new MyRunnable<String>() {
 				@Override
 				public void run (String t) {
 					sb.append (t+"\n");
@@ -233,7 +234,7 @@ public abstract class GPG {
 
 	public static void decryptFileToFile (String password, File f1, File f2) throws GPGException, IOException {
 		try {
-			invokeCMD ("gpg -o \""+f2.getCanonicalPath ()+"\" --decrypt --batch --passphrase-fd 0 \""+f1.getCanonicalPath ()+"\"", "password\n", new MyRunnable<String>() {
+			invokeCMD (new String []{"gpg", "-o", f2.getCanonicalPath (), "--decrypt", "--batch", "--passphrase-fd", "0",f1.getCanonicalPath ()}, "password\n", new MyRunnable<String>() {
 				@Override
 				public void run (String t) {
 				}
@@ -250,7 +251,7 @@ public abstract class GPG {
 
 	public static String encrypt (String pubkey, String cleartext) throws GPGException {
 		// Construct encrypted part
-		String cmd = "gpg -ear "+pubkey+" --always-trust --no-default-keyring --keyring HippoCryptPubRing.gpg";
+		String [] cmd = new String []{"gpg", "-ear", "pubkey", "--always-trust", "--no-default-keyring", "--keyring", "HippoCryptPubRing.gpg"};
 		final StringBuffer sb = new StringBuffer ();
 		try {
 			invokeCMD(cmd, cleartext, new MyRunnable<String>() {
@@ -277,7 +278,7 @@ public abstract class GPG {
 		// Construct encrypted part
 		final StringBuffer sb = new StringBuffer ();
 		try {
-			String cmd = "gpg -ear "+pubkey+" --always-trust --no-default-keyring --keyring HippoCryptPubRing.gpg -o- " + f.getCanonicalPath ();
+			String [] cmd = new String []{"gpg", "-ear", pubkey, "--always-trust", "--no-default-keyring", "--keyring", "HippoCryptPubRing.gpg", "-o-", f.getCanonicalPath ()};
 			invokeCMD(cmd, "", new MyRunnable<String>() {
 				@Override
 				public void run (String t) {

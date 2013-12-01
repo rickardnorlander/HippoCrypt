@@ -119,6 +119,7 @@ public class HippoCrypt {
 				MimeBodyPart ourKeyAttachment = new MimeBodyPart ();
 				ourKeyAttachment.setContent(GPG.getArmoredPublicKey (gpgdata.fingerprint), "application/octet-stream");
 				ourKeyAttachment.setFileName ("publickey.asc");
+				ourKeyAttachment.setDisposition (Part.ATTACHMENT);
 
 				// Create a multipart/mixed containing message and attachment
 
@@ -134,6 +135,7 @@ public class HippoCrypt {
 						sb.append("\n");
 					}
 					fileAttachment.setContent(GPG.encrypt (pubkey, sb.toString ()), "text/pgp");
+					fileAttachment.setDisposition (Part.ATTACHMENT);
 					fileAttachment.setFileName ("filelist.gpg");
 					outer.addBodyPart (fileAttachment);
 				}
@@ -142,6 +144,7 @@ public class HippoCrypt {
 				for (File f : attachments) {
 					MimeBodyPart fileAttachment = new MimeBodyPart ();
 					fileAttachment.setContent(GPG.encryptFile(pubkey, f), "text/pgp");
+					fileAttachment.setDisposition (Part.ATTACHMENT);
 					fileAttachment.setFileName ("attachment"+i+".gpg");
 					outer.addBodyPart (fileAttachment);
 					++i;
@@ -157,6 +160,7 @@ public class HippoCrypt {
 
 				MimeBodyPart attachment = new MimeBodyPart ();
 				attachment.setContent(GPG.getArmoredPublicKey (gpgdata.fingerprint), "application/octet-stream");
+				attachment.setDisposition (Part.ATTACHMENT);
 				attachment.setFileName ("publickey.asc");
 
 				multiPart.addBodyPart (textPart);
@@ -166,6 +170,7 @@ public class HippoCrypt {
 					MimeBodyPart fileAttachment = new MimeBodyPart ();
 					DataSource source = new FileDataSource(f);
 					fileAttachment.setDataHandler(new DataHandler(source));
+					fileAttachment.setDisposition (Part.ATTACHMENT);
 					fileAttachment.setFileName (f.getName ());
 					multiPart.addBodyPart (fileAttachment);
 				}
@@ -204,7 +209,7 @@ public class HippoCrypt {
 	 */
 	private MyMessage parseMessage(Part p) throws
 	MessagingException, IOException {
-		if (Part.ATTACHMENT.equalsIgnoreCase (p.getDisposition ())) {
+		if ((p.getDisposition () == null && p.getFileName () != null) || Part.ATTACHMENT.equalsIgnoreCase (p.getDisposition ())) {
 			Attachment a = new Attachment ();
 			a.filename = new String(NullHelper.help (p.getFileName (), "NONAME").toString().getBytes(), "UTF-8");
 			a.part = p;

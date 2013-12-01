@@ -248,7 +248,6 @@ public class MainUI extends JFrame {
 				
 				try {
 					File ff = new File (System.getProperty("java.io.tmpdir"), "hippocrypt"+System.nanoTime ()+att.filename);
-					while (!ff.createNewFile ())ff = new File (System.getProperty("java.io.tmpdir"), "hippocrypt"+System.nanoTime ()+att.filename);
 					
 					ff.deleteOnExit ();
 					hc.writeAttachmentToFile(att, ff);

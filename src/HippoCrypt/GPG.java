@@ -230,7 +230,24 @@ public abstract class GPG {
 		}
 		return sb.toString ();
 	}
-	
+
+	public static void decryptFileToFile (String password, File f1, File f2) throws GPGException, IOException {
+		try {
+			invokeCMD ("gpg -o \""+f2.getCanonicalPath ()+"\" --decrypt --batch --passphrase-fd 0 \""+f1.getCanonicalPath ()+"\"", "password\n", new MyRunnable<String>() {
+				@Override
+				public void run (String t) {
+				}
+			}, new MyRunnable<String>() {
+				@Override
+				public void run (String t) {
+					System.out.println(t);
+				}
+			});
+		} catch(GPGException e) {
+			throw new GPGException ("Couldn't decrypt", e);
+		}
+	}
+
 	public static String encrypt (String pubkey, String cleartext) throws GPGException {
 		// Construct encrypted part
 		String cmd = "gpg -ear "+pubkey+" --always-trust --no-default-keyring --keyring HippoCryptPubRing.gpg";
@@ -255,7 +272,7 @@ public abstract class GPG {
 		}
 		return sb.toString ();
 	}
-
+	
 	public static String encryptFile (String pubkey, File f) throws GPGException {
 		// Construct encrypted part
 		final StringBuffer sb = new StringBuffer ();

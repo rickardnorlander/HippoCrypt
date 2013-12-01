@@ -3,6 +3,7 @@ import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.regex.*;
 
 import javax.activation.*;
 import javax.mail.*;
@@ -10,11 +11,12 @@ import javax.mail.internet.*;
 import javax.swing.JOptionPane;
 import javax.swing.tree.*;
 
-import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.*;
 import org.apache.commons.io.output.TeeOutputStream;
 
 import com.sun.mail.imap.IMAPFolder;
 
+import HippoCrypt.Email.Attachment;
 import HippoCrypt.GPG.GPGData;
 import HippoCrypt.GPG.GPGException;
 import HippoCrypt.MailProvider.RetInfo;
@@ -191,12 +193,6 @@ public class HippoCrypt {
 		}
 	}
 
-
-	private class Attachment {
-		String filename;
-		InputStream contentStream;
-	}
-
 	private class MyMessage {
 		List<String> text;
 		List<Attachment> attachments;
@@ -211,7 +207,8 @@ public class HippoCrypt {
 		if (Part.ATTACHMENT.equalsIgnoreCase (p.getDisposition ())) {
 			Attachment a = new Attachment ();
 			a.filename = new String(NullHelper.help (p.getFileName (), "NONAME").toString().getBytes(), "UTF-8");
-			a.contentStream = p.getInputStream ();
+			a.part = p;
+			a.encrypted = p.isMimeType ("text/pgp");
 
 			MyMessage ret = new MyMessage ();
 			ret.attachments = Collections.singletonList (a);
@@ -276,6 +273,22 @@ public class HippoCrypt {
 		}
 		return null;
 	}
+	
+	public void writeAttachmentToFile (Attachment att, File f) throws MessagingException, IOException, GPGException {
+		if (att.encrypted) {
+			File temp = File.createTempFile ("hippocrypt", "b");
+			temp.deleteOnExit ();
+			FileOutputStream fos = new FileOutputStream (temp);
+			IOUtils.copy (att.part.getInputStream (), fos);
+			fos.close ();
+			
+			GPG.decryptFileToFile (PASSWORD, temp, f);
+		} else {
+			FileOutputStream fos = new FileOutputStream (f);
+			IOUtils.copy (att.part.getInputStream (), fos);
+			fos.close ();
+		}
+	}
 
 	public Email loadAnEmail (String folder, long uid) {
 		Email ret = new Email ();
@@ -287,6 +300,7 @@ public class HippoCrypt {
     
     			Message m = f.getMessageByUID (uid);
     
+    			ret.folder = folder;
     			ret.from = util.Lists.listToString (Arrays.asList (m.getFrom ()));
     			ret.sentDate = m.getSentDate ();
     			ret.subject = getSubjectFromMessage (m);
@@ -304,29 +318,43 @@ public class HippoCrypt {
     				body.append ("\n");
     			}
     			ret.body = body.toString ();
+    			ret.attachments = new ArrayList<> ();
+    			List<String> names = null;
     			for (int i = 0; i < mm.attachments.size (); ++i) {
-    				if (mm.attachments.get (i).filename.equals ("publickey.asc")) {
+    				Attachment att = mm.attachments.get (i);
+    				if (att.filename.equals ("publickey.asc")) {
     					System.out.println("Has public key!!");
-    
-    					String key = IOUtils.toString (mm.attachments.get (i).contentStream, "UTF-8");
+
+    					String key = IOUtils.toString (att.part.getInputStream (), "UTF-8");
     					for (Address a: m.getFrom ()) {
     						if (a instanceof InternetAddress) {
     							String fromemail = ((InternetAddress) a).getAddress ();
     							maybeAddPublicKey (fromemail, key);
     						}
     					}
+    				} else if (att.filename.equals ("filelist.gpg") && names == null) {
+    					String data = IOUtils.toString (att.part.getInputStream (), "UTF-8");
+    					if (att.encrypted) {
+    						data = GPG.decrypt (data, PASSWORD);
+    					}
+    					names = Arrays.asList (data.split ("\n"));
+    				} else {
+    					ret.attachments.add (att);
+    				}
+    			}
+    			Pattern p = Pattern.compile("attachment(\\d{0,6}).gpg");
+    			for (int i = 0; i < ret.attachments.size (); ++i) {
+    				Attachment att = ret.attachments.get (i);
+    				Matcher matcher = p.matcher (att.filename);
+    				if (matcher.matches ()) {
+    					int n = Integer.parseInt (matcher.group (1)) - 1;
+    					if (n >= 0 && n <names.size ())
+    						att.filename = names.get (n);
     				}
     			}
     		} catch (IOException | MessagingException | GPGException e) {
     			Swing.showException ("Failed to load email", e);
     			e.printStackTrace ();
-    		}
-    		if (f != null && f.isOpen ()) {
-    			try {
-    				f.close (false);
-    			} catch (MessagingException e) {
-    				e.printStackTrace();
-    			}
     		}
 		}
 		return ret;

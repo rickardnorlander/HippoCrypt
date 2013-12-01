@@ -1,12 +1,17 @@
 package HippoCrypt;
 import java.awt.*;
 
+import javax.mail.MessagingException;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.*;
 import javax.swing.tree.*;
 import javax.swing.border.LineBorder;
 
+import org.apache.commons.io.IOUtils;
+
+import HippoCrypt.Email.Attachment;
+import HippoCrypt.GPG.GPGException;
 import util.*;
 
 import java.awt.event.*;
@@ -48,9 +53,14 @@ public class MainUI extends JFrame {
 	private JProgressBar progressBar;
 	
 	private final ConfStore prefs;
-	private JComboBox attachmentCombobox;
+	private JComboBox attachmentOutCombobox;
 	private JButton deleteAttachmentButton;
 	private AttachmentHandler ah;
+	private JComboBox attachmentInComboBox;
+	private JButton btnOpen;
+	private JButton btnSave;
+	
+	private Email displayedEmail;
 
 	/**
 	 * Create the frame.
@@ -60,7 +70,7 @@ public class MainUI extends JFrame {
 		this.prefs = cs;
 		setTitle("HippoCrypt");
 		setDefaultCloseOperation (JFrame.EXIT_ON_CLOSE);
-		setBounds (100, 100, 857, 617);
+		setBounds (100, 100, 970, 617);
 		contentPane = new JPanel ();
 		contentPane.setBackground(Color.GRAY);
 		contentPane.setBorder (new EmptyBorder (5, 5, 5, 5));
@@ -220,6 +230,47 @@ public class MainUI extends JFrame {
 		sl_showMailPanel.putConstraint(SpringLayout.SOUTH, subjectLabelIn, 44, SpringLayout.NORTH, showMailPanel);
 		sl_showMailPanel.putConstraint(SpringLayout.EAST, subjectLabelIn, 233, SpringLayout.WEST, showMailPanel);
 		showMailPanel.add(subjectLabelIn);
+		
+		JLabel lblAttachments = new JLabel("Attachments");
+		sl_showMailPanel.putConstraint(SpringLayout.NORTH, lblAttachments, 4, SpringLayout.NORTH, forwardButton);
+		showMailPanel.add(lblAttachments);
+		
+		attachmentInComboBox = new JComboBox();
+		sl_showMailPanel.putConstraint(SpringLayout.EAST, lblAttachments, -20, SpringLayout.WEST, attachmentInComboBox);
+		sl_showMailPanel.putConstraint(SpringLayout.SOUTH, attachmentInComboBox, -13, SpringLayout.SOUTH, showMailPanel);
+		showMailPanel.add(attachmentInComboBox);
+		
+		btnOpen = new JButton("Open");
+		btnOpen.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				int n = attachmentInComboBox.getSelectedIndex ();
+				Attachment att = displayedEmail.attachments.get(n);
+				
+				try {
+					File ff = new File (System.getProperty("java.io.tmpdir"), "hippocrypt"+System.nanoTime ()+att.filename);
+					while (!ff.createNewFile ())ff = new File (System.getProperty("java.io.tmpdir"), "hippocrypt"+System.nanoTime ()+att.filename);
+					
+					ff.deleteOnExit ();
+					hc.writeAttachmentToFile(att, ff);
+					Desktop.getDesktop().open(ff);
+				} catch (IOException | MessagingException | GPGException e) {
+					Swing.showException ("Couldn't open file", e);
+					e.printStackTrace();
+				}
+				
+				
+			}
+		});
+		sl_showMailPanel.putConstraint(SpringLayout.WEST, attachmentInComboBox, -200, SpringLayout.WEST, btnOpen);
+		sl_showMailPanel.putConstraint(SpringLayout.EAST, attachmentInComboBox, -20, SpringLayout.WEST, btnOpen);
+		sl_showMailPanel.putConstraint(SpringLayout.NORTH, btnOpen, 0, SpringLayout.NORTH, forwardButton);
+		showMailPanel.add(btnOpen);
+		
+		btnSave = new JButton("Save");
+		sl_showMailPanel.putConstraint(SpringLayout.EAST, btnOpen, -20, SpringLayout.WEST, btnSave);
+		sl_showMailPanel.putConstraint(SpringLayout.SOUTH, btnSave, 0, SpringLayout.SOUTH, forwardButton);
+		sl_showMailPanel.putConstraint(SpringLayout.EAST, btnSave, -10, SpringLayout.EAST, showMailPanel);
+		showMailPanel.add(btnSave);
 		subjectLabelIn.putClientProperty("html.disable", Boolean.TRUE);
 		
 		JPanel composeMailPanel = new JPanel();
@@ -331,12 +382,12 @@ public class MainUI extends JFrame {
 		sl_composeMailPanel.putConstraint(SpringLayout.WEST, deleteAttachmentButton, 253, SpringLayout.EAST, btnNewButton);
 		composeMailPanel.add(deleteAttachmentButton);
 
-		attachmentCombobox = new JComboBox();
-		attachmentCombobox.setEnabled(false);
-		sl_composeMailPanel.putConstraint(SpringLayout.NORTH, attachmentCombobox, 0, SpringLayout.NORTH, submitButton);
-		sl_composeMailPanel.putConstraint(SpringLayout.WEST, attachmentCombobox, 20, SpringLayout.EAST, btnNewButton);
-		sl_composeMailPanel.putConstraint(SpringLayout.EAST, attachmentCombobox, 0, SpringLayout.EAST, toField);
-		composeMailPanel.add(attachmentCombobox);
+		attachmentOutCombobox = new JComboBox();
+		attachmentOutCombobox.setEnabled(false);
+		sl_composeMailPanel.putConstraint(SpringLayout.NORTH, attachmentOutCombobox, 0, SpringLayout.NORTH, submitButton);
+		sl_composeMailPanel.putConstraint(SpringLayout.WEST, attachmentOutCombobox, 20, SpringLayout.EAST, btnNewButton);
+		sl_composeMailPanel.putConstraint(SpringLayout.EAST, attachmentOutCombobox, 0, SpringLayout.EAST, toField);
+		composeMailPanel.add(attachmentOutCombobox);
 
 		JPanel mailListPanel = new JPanel();
 		mailListPanel.setBackground(Color.GREEN);
@@ -379,10 +430,6 @@ public class MainUI extends JFrame {
 				}.execute ();
 			}
 		});
-		
-		JPanel panel = new JPanel();
-		cardPanel.add(panel, "name_223965290045647");
-		panel.setLayout(null);
 
 		JScrollPane scrollPane = new JScrollPane();
 		splitPane.setLeftComponent(scrollPane);
@@ -423,7 +470,7 @@ public class MainUI extends JFrame {
 		mailFolderTree.putClientProperty("html.disable", Boolean.TRUE);
 		mailFolderTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 
-		ah = new AttachmentHandler (attachmentCombobox, deleteAttachmentButton);
+		ah = new AttachmentHandler (attachmentOutCombobox, deleteAttachmentButton);
 	}
 
 	/**
@@ -450,10 +497,28 @@ public class MainUI extends JFrame {
 	}
 	
 	public void showEmail (Email email) {
+		displayedEmail = email;
 		fromLabel.setText (email.from);
 		subjectLabelIn.setText (email.subject);
 		dateLabel.setText ("Date: "+email.sentDate);
 		bodyIn.setText (email.body);
+		
+		if (email.attachments != null && !email.attachments.isEmpty () ) {
+			btnOpen.setEnabled (true);
+			btnSave.setEnabled (true);
+			attachmentInComboBox.setEnabled (true);
+			DefaultComboBoxModel dcbm = new DefaultComboBoxModel<> ();
+			for (Attachment a : email.attachments)
+				dcbm.addElement (a.filename);
+			attachmentInComboBox.setModel (dcbm);
+		} else {
+			btnOpen.setEnabled (false);
+			btnSave.setEnabled (false);
+			attachmentInComboBox.setEnabled (false);
+			DefaultComboBoxModel dcbm = new DefaultComboBoxModel<> ();
+			attachmentInComboBox.setModel (dcbm);
+		}
+		
 		((CardLayout)cardPanel.getLayout()).show(cardPanel, "showMailPanel");
 	}
 	

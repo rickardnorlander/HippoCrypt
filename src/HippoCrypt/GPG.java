@@ -251,7 +251,32 @@ public abstract class GPG {
 			}); 
 		}
 		catch(GPGException e) {
-			throw new GPGException ("Couldn't decrypt", e);
+			throw new GPGException ("Couldn't encrypt", e);
+		}
+		return sb.toString ();
+	}
+
+	public static String encryptFile (String pubkey, File f) throws GPGException {
+		// Construct encrypted part
+		final StringBuffer sb = new StringBuffer ();
+		try {
+			String cmd = "gpg -ear "+pubkey+" --always-trust --no-default-keyring --keyring HippoCryptPubRing.gpg -o- " + f.getCanonicalPath ();
+			invokeCMD(cmd, "", new MyRunnable<String>() {
+				@Override
+				public void run (String t) {
+					sb.append (t+"\n");
+					System.out.println("out "+t);
+				}
+			}, new MyRunnable<String>() {
+				@Override
+				public void run (String t) {
+					sb.append (t+"\n");
+					System.out.println("err "+t);
+				}
+			}); 
+		}
+		catch(GPGException | IOException e) {
+			throw new GPGException ("Couldn't encrypt file", e);
 		}
 		return sb.toString ();
 	}

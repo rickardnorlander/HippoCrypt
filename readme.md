@@ -5,4 +5,4 @@ For now only gmail is supported.
 
 You will need gpg to use this. For windows users, please download http://www.gpg4win.org/download.html
 
-To build, open the project file in Eclipse.
+To build, open the project file in Eclipse. Run the main function in HippoCrypt.java

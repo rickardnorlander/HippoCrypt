@@ -6,6 +6,7 @@ Support for more mail providers
 Maybe add support for cancelling slow tasks?
 Uninstaller
 Clean up UI
+Show message when gathering entropy
 
 Keep in mind / done:
 

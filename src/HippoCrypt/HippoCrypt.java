@@ -4,6 +4,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.sql.SQLException;
 import java.util.*;
 
+import javax.activation.*;
 import javax.mail.*;
 import javax.mail.internet.*;
 import javax.swing.JOptionPane;
@@ -60,7 +61,7 @@ public class HippoCrypt {
 		return ret;
 	}
 
-	public void sendMail (String to, String subject, String pubkey, String body) {
+	public void sendMail (String to, String subject, String pubkey, String body, List<File> attachments) {
 		try {
 			Message message = new MimeMessage(session);
 			message.setFrom(new InternetAddress(email));
@@ -90,15 +91,36 @@ public class HippoCrypt {
 
 				// Add our public key
 
-				MimeBodyPart attachment = new MimeBodyPart ();
-				attachment.setContent(GPG.getArmoredPublicKey (gpgdata.fingerprint), "application/octet-stream");
-				attachment.setFileName ("publickey.asc");
+				MimeBodyPart ourKeyAttachment = new MimeBodyPart ();
+				ourKeyAttachment.setContent(GPG.getArmoredPublicKey (gpgdata.fingerprint), "application/octet-stream");
+				ourKeyAttachment.setFileName ("publickey.asc");
 
-				// Create the a multipart/mixed containing message and attachment
+				// Create a multipart/mixed containing message and attachment
 
 				Multipart outer = new MimeMultipart("mixed");
 				outer.addBodyPart (alternativeBody);
-				outer.addBodyPart (attachment);
+				outer.addBodyPart (ourKeyAttachment);
+
+				if (!attachments.isEmpty ()) {
+					MimeBodyPart fileAttachment = new MimeBodyPart ();
+					StringBuilder sb = new StringBuilder ();
+					for (File f : attachments) {
+						sb.append(f.getName ());
+						sb.append("\n");
+					}
+					fileAttachment.setContent(GPG.encrypt (pubkey, sb.toString ()), "text/pgp");
+					fileAttachment.setFileName ("filelist.gpg");
+					outer.addBodyPart (fileAttachment);
+				}
+
+				int i = 1;
+				for (File f : attachments) {
+					MimeBodyPart fileAttachment = new MimeBodyPart ();
+					fileAttachment.setContent(GPG.encryptFile(pubkey, f), "text/pgp");
+					fileAttachment.setFileName ("attachment"+i+".gpg");
+					outer.addBodyPart (fileAttachment);
+					++i;
+				}
 
 				message.setContent(outer);
 			} else {
@@ -113,6 +135,14 @@ public class HippoCrypt {
 
 				multiPart.addBodyPart (textPart);
 				multiPart.addBodyPart (attachment);
+
+				for (File f : attachments) {
+					MimeBodyPart fileAttachment = new MimeBodyPart ();
+					DataSource source = new FileDataSource(f);
+					fileAttachment.setDataHandler(new DataHandler(source));
+					fileAttachment.setFileName (f.getName ());
+					multiPart.addBodyPart (fileAttachment);
+				}
 
 				message.setContent(multiPart);
 			}

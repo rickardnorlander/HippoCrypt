@@ -10,7 +10,7 @@ import javax.swing.border.LineBorder;
 import util.*;
 
 import java.awt.event.*;
-import java.io.IOException;
+import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.net.*;
 import java.util.*;
@@ -48,6 +48,9 @@ public class MainUI extends JFrame {
 	private JProgressBar progressBar;
 	
 	private final ConfStore prefs;
+	private JComboBox attachmentCombobox;
+	private JButton deleteAttachmentButton;
+	private AttachmentHandler ah;
 
 	/**
 	 * Create the frame.
@@ -224,7 +227,7 @@ public class MainUI extends JFrame {
 		cardPanel.add(composeMailPanel, "composeMailPanel");
 		SpringLayout sl_composeMailPanel = new SpringLayout();
 		composeMailPanel.setLayout(sl_composeMailPanel);
-		
+
 		JLabel toLabel = new JLabel("To");
 		sl_composeMailPanel.putConstraint(SpringLayout.NORTH, toLabel, 14, SpringLayout.NORTH, composeMailPanel);
 		sl_composeMailPanel.putConstraint(SpringLayout.WEST, toLabel, 10, SpringLayout.WEST, composeMailPanel);
@@ -293,13 +296,48 @@ public class MainUI extends JFrame {
 			public void actionPerformed(ActionEvent arg0) {
 				runInThreadWithProgressBar (new Runnable () {
 					@Override public void run () {
-						hc.sendMail (toField.getText (), subjectOutField.getText (), pgp, bodyOut.getText ());
+						hc.sendMail (toField.getText (), subjectOutField.getText (), pgp, bodyOut.getText (), ah.getFiles ());
 					}
 				});
 			}
 		});
 		composeMailPanel.add(submitButton);
 		
+		JButton btnNewButton = new JButton("Attach");
+		btnNewButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				final JFileChooser fc = new JFileChooser();
+				fc.setMultiSelectionEnabled(true);
+				int returnVal = fc.showOpenDialog (MainUI.this);
+				if (returnVal == JFileChooser.APPROVE_OPTION) {
+					File [] fs = fc.getSelectedFiles ();
+					for (File f : fs)
+						ah.add (f.getName (), f);
+				}
+			}
+		});
+		sl_composeMailPanel.putConstraint(SpringLayout.WEST, btnNewButton, 0, SpringLayout.WEST, toLabel);
+		sl_composeMailPanel.putConstraint(SpringLayout.SOUTH, btnNewButton, 0, SpringLayout.SOUTH, submitButton);
+		composeMailPanel.add(btnNewButton);
+
+		deleteAttachmentButton = new JButton("Delete");
+		deleteAttachmentButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				ah.delete ();
+			}
+		});
+		deleteAttachmentButton.setEnabled(false);
+		sl_composeMailPanel.putConstraint(SpringLayout.NORTH, deleteAttachmentButton, 0, SpringLayout.NORTH, submitButton);
+		sl_composeMailPanel.putConstraint(SpringLayout.WEST, deleteAttachmentButton, 253, SpringLayout.EAST, btnNewButton);
+		composeMailPanel.add(deleteAttachmentButton);
+
+		attachmentCombobox = new JComboBox();
+		attachmentCombobox.setEnabled(false);
+		sl_composeMailPanel.putConstraint(SpringLayout.NORTH, attachmentCombobox, 0, SpringLayout.NORTH, submitButton);
+		sl_composeMailPanel.putConstraint(SpringLayout.WEST, attachmentCombobox, 20, SpringLayout.EAST, btnNewButton);
+		sl_composeMailPanel.putConstraint(SpringLayout.EAST, attachmentCombobox, 0, SpringLayout.EAST, toField);
+		composeMailPanel.add(attachmentCombobox);
+
 		JPanel mailListPanel = new JPanel();
 		mailListPanel.setBackground(Color.GREEN);
 		cardPanel.add(mailListPanel, "mailListPanel");
@@ -342,17 +380,18 @@ public class MainUI extends JFrame {
 			}
 		});
 		
+		JPanel panel = new JPanel();
+		cardPanel.add(panel, "name_223965290045647");
+		panel.setLayout(null);
+
 		JScrollPane scrollPane = new JScrollPane();
 		splitPane.setLeftComponent(scrollPane);
 		
 		mailFolderTree = new JTree();
-		mailFolderTree.setModel(new DefaultTreeModel(
-			new DefaultMutableTreeNode("JTree") {
-				{
-					add(new DefaultMutableTreeNode("Loading folders..."));
-				}
-			}
-		));
+		DefaultMutableTreeNode dmtn = new DefaultMutableTreeNode ("JTree");
+		dmtn.add (new DefaultMutableTreeNode ("Loading folders..."));
+		DefaultTreeModel dtm = new DefaultTreeModel (dmtn);
+		mailFolderTree.setModel(dtm);
 		mailFolderTree.setRootVisible(false);
 		mailFolderTree.setShowsRootHandles(true);
 		scrollPane.setViewportView(mailFolderTree);
@@ -383,6 +422,8 @@ public class MainUI extends JFrame {
 		});
 		mailFolderTree.putClientProperty("html.disable", Boolean.TRUE);
 		mailFolderTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+
+		ah = new AttachmentHandler (attachmentCombobox, deleteAttachmentButton);
 	}
 
 	/**

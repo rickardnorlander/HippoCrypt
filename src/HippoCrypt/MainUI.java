@@ -95,7 +95,6 @@ public class MainUI extends JFrame {
 		});
 		sl_topPanel.putConstraint(SpringLayout.NORTH, button, 5, SpringLayout.NORTH, topPanel);
 		sl_topPanel.putConstraint(SpringLayout.WEST, button, 0, SpringLayout.WEST, topPanel);
-		sl_topPanel.putConstraint(SpringLayout.EAST, button, 89, SpringLayout.WEST, topPanel);
 		topPanel.add(button);
 		
 		progressBar = new JProgressBar();
@@ -141,13 +140,10 @@ public class MainUI extends JFrame {
 		fromLabelLabel = new JLabel("From");
 		sl_showMailPanel.putConstraint(SpringLayout.NORTH, fromLabelLabel, 11, SpringLayout.NORTH, showMailPanel);
 		sl_showMailPanel.putConstraint(SpringLayout.WEST, fromLabelLabel, 10, SpringLayout.WEST, showMailPanel);
-		sl_showMailPanel.putConstraint(SpringLayout.EAST, fromLabelLabel, 61, SpringLayout.WEST, showMailPanel);
 		showMailPanel.add(fromLabelLabel);
 		
 		JButton forwardButton = new JButton("Forward");
-		sl_showMailPanel.putConstraint(SpringLayout.WEST, forwardButton, 218, SpringLayout.WEST, showMailPanel);
 		sl_showMailPanel.putConstraint(SpringLayout.SOUTH, forwardButton, -10, SpringLayout.SOUTH, showMailPanel);
-		sl_showMailPanel.putConstraint(SpringLayout.EAST, forwardButton, 307, SpringLayout.WEST, showMailPanel);
 		showMailPanel.add(forwardButton);
 		
 		JScrollPane scrollPane_1 = new JScrollPane();
@@ -187,22 +183,21 @@ public class MainUI extends JFrame {
 		
 		dateLabel = new JLabel("Date");
 		sl_showMailPanel.putConstraint(SpringLayout.NORTH, dateLabel, 11, SpringLayout.NORTH, showMailPanel);
-		sl_showMailPanel.putConstraint(SpringLayout.WEST, dateLabel, 254, SpringLayout.WEST, showMailPanel);
-		sl_showMailPanel.putConstraint(SpringLayout.EAST, dateLabel, 415, SpringLayout.WEST, showMailPanel);
+		sl_showMailPanel.putConstraint(SpringLayout.WEST, dateLabel, -250, SpringLayout.EAST, showMailPanel);
+		sl_showMailPanel.putConstraint(SpringLayout.EAST, dateLabel, -20, SpringLayout.EAST, showMailPanel);
 		showMailPanel.add(dateLabel);
 		dateLabel.putClientProperty("html.disable", Boolean.TRUE);
 		
 		
 		JButton replyAllButton = new JButton("Reply all");
-		sl_showMailPanel.putConstraint(SpringLayout.WEST, replyAllButton, 119, SpringLayout.WEST, showMailPanel);
+		sl_showMailPanel.putConstraint(SpringLayout.WEST, forwardButton, 20, SpringLayout.EAST, replyAllButton);
 		sl_showMailPanel.putConstraint(SpringLayout.SOUTH, replyAllButton, -10, SpringLayout.SOUTH, showMailPanel);
-		sl_showMailPanel.putConstraint(SpringLayout.EAST, replyAllButton, 208, SpringLayout.WEST, showMailPanel);
 		showMailPanel.add(replyAllButton);
 		
 		JButton replyButton = new JButton("Reply");
+		sl_showMailPanel.putConstraint(SpringLayout.WEST, replyAllButton, 20, SpringLayout.EAST, replyButton);
 		sl_showMailPanel.putConstraint(SpringLayout.WEST, replyButton, 20, SpringLayout.WEST, showMailPanel);
 		sl_showMailPanel.putConstraint(SpringLayout.SOUTH, replyButton, -10, SpringLayout.SOUTH, showMailPanel);
-		sl_showMailPanel.putConstraint(SpringLayout.EAST, replyButton, 109, SpringLayout.WEST, showMailPanel);
 		replyButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				showCompose("Re: "+subjectLabelIn.getText (), Quote.quote (bodyIn.getText ()), fromLabel.getText ());
@@ -213,22 +208,21 @@ public class MainUI extends JFrame {
 		subjectLabelLabel = new JLabel("Subject");
 		sl_showMailPanel.putConstraint(SpringLayout.NORTH, subjectLabelLabel, 30, SpringLayout.NORTH, showMailPanel);
 		sl_showMailPanel.putConstraint(SpringLayout.WEST, subjectLabelLabel, 10, SpringLayout.WEST, showMailPanel);
-		sl_showMailPanel.putConstraint(SpringLayout.EAST, subjectLabelLabel, 61, SpringLayout.WEST, showMailPanel);
 		showMailPanel.add(subjectLabelLabel);
 		
 		fromLabel = new JLabel("");
 		sl_showMailPanel.putConstraint(SpringLayout.NORTH, fromLabel, 11, SpringLayout.NORTH, showMailPanel);
-		sl_showMailPanel.putConstraint(SpringLayout.WEST, fromLabel, 63, SpringLayout.WEST, showMailPanel);
+		sl_showMailPanel.putConstraint(SpringLayout.WEST, fromLabel, 20, SpringLayout.EAST, subjectLabelLabel);
 		sl_showMailPanel.putConstraint(SpringLayout.SOUTH, fromLabel, 25, SpringLayout.NORTH, showMailPanel);
-		sl_showMailPanel.putConstraint(SpringLayout.EAST, fromLabel, 233, SpringLayout.WEST, showMailPanel);
+		sl_showMailPanel.putConstraint(SpringLayout.EAST, fromLabel, -20, SpringLayout.WEST, dateLabel);
 		showMailPanel.add(fromLabel);
 		fromLabel.putClientProperty("html.disable", Boolean.TRUE);
 		
 		subjectLabelIn = new JLabel("");
 		sl_showMailPanel.putConstraint(SpringLayout.NORTH, subjectLabelIn, 30, SpringLayout.NORTH, showMailPanel);
-		sl_showMailPanel.putConstraint(SpringLayout.WEST, subjectLabelIn, 63, SpringLayout.WEST, showMailPanel);
+		sl_showMailPanel.putConstraint(SpringLayout.WEST, subjectLabelIn, 20, SpringLayout.EAST, subjectLabelLabel);
 		sl_showMailPanel.putConstraint(SpringLayout.SOUTH, subjectLabelIn, 44, SpringLayout.NORTH, showMailPanel);
-		sl_showMailPanel.putConstraint(SpringLayout.EAST, subjectLabelIn, 233, SpringLayout.WEST, showMailPanel);
+		sl_showMailPanel.putConstraint(SpringLayout.EAST, subjectLabelIn, -20, SpringLayout.WEST, dateLabel);
 		showMailPanel.add(subjectLabelIn);
 		
 		JLabel lblAttachments = new JLabel("Attachments");
@@ -286,7 +280,6 @@ public class MainUI extends JFrame {
 		
 		toField = new JTextField();
 		sl_composeMailPanel.putConstraint(SpringLayout.NORTH, toField, 11, SpringLayout.NORTH, composeMailPanel);
-		sl_composeMailPanel.putConstraint(SpringLayout.WEST, toField, 64, SpringLayout.WEST, composeMailPanel);
 		sl_composeMailPanel.putConstraint(SpringLayout.EAST, toField, 311, SpringLayout.WEST, composeMailPanel);
 		toField.setColumns(10);
 		toField.getDocument().addDocumentListener(new DocumentListener() {  // Update the encrypted field, based on availability of a pubkey
@@ -316,14 +309,14 @@ public class MainUI extends JFrame {
 		composeMailPanel.add(encryptionOutStatus);
 		
 		JLabel subjectLabel = new JLabel("Subject");
+		sl_composeMailPanel.putConstraint(SpringLayout.WEST, toField, 20, SpringLayout.EAST, subjectLabel);
 		sl_composeMailPanel.putConstraint(SpringLayout.NORTH, subjectLabel, 39, SpringLayout.NORTH, composeMailPanel);
 		sl_composeMailPanel.putConstraint(SpringLayout.WEST, subjectLabel, 10, SpringLayout.WEST, composeMailPanel);
-		sl_composeMailPanel.putConstraint(SpringLayout.EAST, subjectLabel, 56, SpringLayout.WEST, composeMailPanel);
 		composeMailPanel.add(subjectLabel);
 		
 		subjectOutField = new JTextField();
 		sl_composeMailPanel.putConstraint(SpringLayout.NORTH, subjectOutField, 36, SpringLayout.NORTH, composeMailPanel);
-		sl_composeMailPanel.putConstraint(SpringLayout.WEST, subjectOutField, 64, SpringLayout.WEST, composeMailPanel);
+		sl_composeMailPanel.putConstraint(SpringLayout.WEST, subjectOutField, 20, SpringLayout.EAST, subjectLabel);
 		sl_composeMailPanel.putConstraint(SpringLayout.EAST, subjectOutField, 311, SpringLayout.WEST, composeMailPanel);
 		subjectOutField.setColumns(10);
 		composeMailPanel.add(subjectOutField);
@@ -339,7 +332,6 @@ public class MainUI extends JFrame {
 		scrollPane_2.setViewportView(bodyOut);
 		
 		JButton submitButton = new JButton("Submit");
-		sl_composeMailPanel.putConstraint(SpringLayout.WEST, submitButton, -89, SpringLayout.EAST, composeMailPanel);
 		sl_composeMailPanel.putConstraint(SpringLayout.SOUTH, submitButton, -10, SpringLayout.SOUTH, composeMailPanel);
 		sl_composeMailPanel.putConstraint(SpringLayout.EAST, submitButton, -10, SpringLayout.EAST, composeMailPanel);
 		submitButton.addActionListener(new ActionListener() { // Send email button handler
@@ -378,10 +370,10 @@ public class MainUI extends JFrame {
 		});
 		deleteAttachmentButton.setEnabled(false);
 		sl_composeMailPanel.putConstraint(SpringLayout.NORTH, deleteAttachmentButton, 0, SpringLayout.NORTH, submitButton);
-		sl_composeMailPanel.putConstraint(SpringLayout.WEST, deleteAttachmentButton, 253, SpringLayout.EAST, btnNewButton);
 		composeMailPanel.add(deleteAttachmentButton);
 
 		attachmentOutCombobox = new JComboBox();
+		sl_composeMailPanel.putConstraint(SpringLayout.WEST, deleteAttachmentButton, 20, SpringLayout.EAST, attachmentOutCombobox);
 		attachmentOutCombobox.setEnabled(false);
 		sl_composeMailPanel.putConstraint(SpringLayout.NORTH, attachmentOutCombobox, 0, SpringLayout.NORTH, submitButton);
 		sl_composeMailPanel.putConstraint(SpringLayout.WEST, attachmentOutCombobox, 20, SpringLayout.EAST, btnNewButton);

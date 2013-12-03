@@ -507,7 +507,7 @@ public class HippoCrypt {
     			System.exit (1);
     		}
 
-    		String password_prompt = "Password"; 
+    		String password_prompt = "Email account password"; 
     		while (true) {
     			try {
     				final String password = PasswordDialog.askPass(password_prompt);

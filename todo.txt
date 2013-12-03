@@ -1,14 +1,15 @@
 Todo:
 Better initial setup
 Support for attachments
-Encrypt subject
 Support for more mail providers
 Maybe add support for cancelling slow tasks?
 Uninstaller
-Clean up UI
 Show message when gathering entropy
 Handle deleted messages somehow
 Fix encodings
+
+Double click submit
+When you open a mail you have to change folder and then back.
 
 Keep in mind / done:
 

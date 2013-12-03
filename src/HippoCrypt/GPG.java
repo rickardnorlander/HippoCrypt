@@ -69,6 +69,7 @@ public abstract class GPG {
 		Process process = null;
 		try {
 			ProcessBuilder pb = new ProcessBuilder (cmd);
+			pb.environment ().put ("LC_ALL", "C");
 			process = pb.start ();
 			InputStream isout = process.getInputStream();
 			InputStream iserr = process.getErrorStream ();

@@ -306,7 +306,7 @@ public class HippoCrypt {
     			Message m = f.getMessageByUID (uid);
     
     			ret.folder = folder;
-    			ret.from = util.Lists.listToString (Arrays.asList (m.getFrom ()));
+    			ret.from = getFromString (m);
     			ret.sentDate = m.getSentDate ();
     			ret.subject = getSubjectFromMessage (m);
     
@@ -409,7 +409,7 @@ public class HippoCrypt {
     				Email a = new Email ();
     				a.sentDate = message.getSentDate ();
     				a.subject = getSubjectFromMessage (message);
-    				a.from = util.Lists.listToString (Arrays.asList (message.getFrom ()));
+    				a.from = getFromString (message);
     				a.folder = folderName;
     				a.uid = f.getUID (message);
     
@@ -430,6 +430,18 @@ public class HippoCrypt {
     			}
     		}
 		}
+	}
+
+	private String getFromString (Message message) throws MessagingException {
+		Address[] from = message.getFrom ();
+		StringBuilder sb = new StringBuilder ();
+		for (int i = 0; i < from.length; ++i) {
+			if (i != 0) {
+				sb.append (", ");
+			}
+			sb.append (from[i].toString ());
+		}
+		return sb.toString ();
 	}
 
 	private String getSubjectFromMessage (Message message) throws MessagingException {

@@ -63,127 +63,122 @@ public class HippoCrypt {
 		return ret;
 	}
 
-	public void sendMail (String to, String subject, String pubkey, String body, List<File> attachments) {
-		try {
-			Message message = new MimeMessage(session);
-			message.setFrom(new InternetAddress(email));
-			message.setRecipients(Message.RecipientType.TO,
-					InternetAddress.parse(to));
+	public void sendMail (String to, String subject, String pubkey, String body, List<File> attachments) throws MessagingException, GPGException {
+		Message message = new MimeMessage(session);
+		message.setFrom(new InternetAddress(email));
+		message.setRecipients(Message.RecipientType.TO,
+				InternetAddress.parse(to));
 
-			if (pubkey != null) {
-				message.setSubject("HippoCrypt encrypted email");
-				String encSubject = GPG.encrypt (pubkey, gpgdata.fingerprint, subject);
+		if (pubkey != null) {
+			message.setSubject("HippoCrypt encrypted email");
+			String encSubject = GPG.encrypt (pubkey, gpgdata.fingerprint, subject);
 
-				// Strip the pgp headers
-				int ind1 = encSubject.indexOf ('\n');
-				if (ind1 == -1) {
-					throw new RuntimeException ();
-				}
-				int ind2 = encSubject.indexOf ('\n', ind1+1);
-				if (ind2 == -1) {
-					throw new RuntimeException ();
-				}
-				int lastInd = encSubject.lastIndexOf ('\n');
-				if (lastInd == -1) {
-					throw new RuntimeException ();
-				}
-				int lastInd2 = encSubject.lastIndexOf ('\n', lastInd-1);
-				if (lastInd2 == -1) {
-					throw new RuntimeException ();
-				}
-				encSubject = encSubject.substring (ind2+2, lastInd2);
-				encSubject = encSubject.replaceAll ("\n", "");
+			// Strip the pgp headers
+			int ind1 = encSubject.indexOf ('\n');
+			if (ind1 == -1) {
+				throw new RuntimeException ();
+			}
+			int ind2 = encSubject.indexOf ('\n', ind1+1);
+			if (ind2 == -1) {
+				throw new RuntimeException ();
+			}
+			int lastInd = encSubject.lastIndexOf ('\n');
+			if (lastInd == -1) {
+				throw new RuntimeException ();
+			}
+			int lastInd2 = encSubject.lastIndexOf ('\n', lastInd-1);
+			if (lastInd2 == -1) {
+				throw new RuntimeException ();
+			}
+			encSubject = encSubject.substring (ind2+2, lastInd2);
+			encSubject = encSubject.replaceAll ("\n", "");
 
-				message.setHeader ("PGP-Subject", encSubject);
+			message.setHeader ("PGP-Subject", encSubject);
 
-				// Construct encrypted part
+			// Construct encrypted part
 
-				MimeBodyPart pgppart = new MimeBodyPart();
-				pgppart.setContent(GPG.encrypt (pubkey, gpgdata.fingerprint, body), "text/pgp; charset=utf-8");
+			MimeBodyPart pgppart = new MimeBodyPart();
+			pgppart.setContent(GPG.encrypt (pubkey, gpgdata.fingerprint, body), "text/pgp; charset=utf-8");
 
-				// Construct message for incompatible readers
+			// Construct message for incompatible readers
 
-				MimeBodyPart textPart = new MimeBodyPart();
-				textPart.setText("This is an encrypted email sent with HippoCrypt.", "utf-8");
+			MimeBodyPart textPart = new MimeBodyPart();
+			textPart.setText("This is an encrypted email sent with HippoCrypt.", "utf-8");
 
-				// Construct multipart/alternative with the previous parts
+			// Construct multipart/alternative with the previous parts
 
-				Multipart alternative = new MimeMultipart("alternative");
-				alternative.addBodyPart(textPart);
-				alternative.addBodyPart(pgppart);
-				MimeBodyPart alternativeBody = new MimeBodyPart ();
-				alternativeBody.setContent (alternative);
+			Multipart alternative = new MimeMultipart("alternative");
+			alternative.addBodyPart(textPart);
+			alternative.addBodyPart(pgppart);
+			MimeBodyPart alternativeBody = new MimeBodyPart ();
+			alternativeBody.setContent (alternative);
 
-				// Add our public key
+			// Add our public key
 
-				MimeBodyPart ourKeyAttachment = new MimeBodyPart ();
-				ourKeyAttachment.setContent(GPG.getArmoredPublicKey (gpgdata.fingerprint), "application/octet-stream");
-				ourKeyAttachment.setFileName ("publickey.asc");
-				ourKeyAttachment.setDisposition (Part.ATTACHMENT);
+			MimeBodyPart ourKeyAttachment = new MimeBodyPart ();
+			ourKeyAttachment.setContent(GPG.getArmoredPublicKey (gpgdata.fingerprint), "application/octet-stream");
+			ourKeyAttachment.setFileName ("publickey.asc");
+			ourKeyAttachment.setDisposition (Part.ATTACHMENT);
 
-				// Create a multipart/mixed containing message and attachment
+			// Create a multipart/mixed containing message and attachment
 
-				Multipart outer = new MimeMultipart("mixed");
-				outer.addBodyPart (alternativeBody);
-				outer.addBodyPart (ourKeyAttachment);
+			Multipart outer = new MimeMultipart("mixed");
+			outer.addBodyPart (alternativeBody);
+			outer.addBodyPart (ourKeyAttachment);
 
-				if (!attachments.isEmpty ()) {
-					MimeBodyPart fileAttachment = new MimeBodyPart ();
-					StringBuilder sb = new StringBuilder ();
-					for (File f : attachments) {
-						sb.append(f.getName ());
-						sb.append("\n");
-					}
-					fileAttachment.setContent(GPG.encrypt (pubkey, gpgdata.fingerprint, sb.toString ()), "text/pgp");
-					fileAttachment.setDisposition (Part.ATTACHMENT);
-					fileAttachment.setFileName ("filelist.gpg");
-					outer.addBodyPart (fileAttachment);
-				}
-
-				int i = 1;
+			if (!attachments.isEmpty ()) {
+				MimeBodyPart fileAttachment = new MimeBodyPart ();
+				StringBuilder sb = new StringBuilder ();
 				for (File f : attachments) {
-					MimeBodyPart fileAttachment = new MimeBodyPart ();
-					fileAttachment.setContent(GPG.encryptFile(pubkey, gpgdata.fingerprint, f), "text/pgp");
-					fileAttachment.setDisposition (Part.ATTACHMENT);
-					fileAttachment.setFileName ("attachment"+i+".gpg");
-					outer.addBodyPart (fileAttachment);
-					++i;
+					sb.append(f.getName ());
+					sb.append("\n");
 				}
-
-				message.setContent(outer);
-			} else {
-				message.setSubject(subject);
-				Multipart multiPart = new MimeMultipart("mixed");
-
-				MimeBodyPart textPart = new MimeBodyPart ();
-				textPart.setText(body, "utf-8");
-
-				MimeBodyPart attachment = new MimeBodyPart ();
-				attachment.setContent(GPG.getArmoredPublicKey (gpgdata.fingerprint), "application/octet-stream");
-				attachment.setDisposition (Part.ATTACHMENT);
-				attachment.setFileName ("publickey.asc");
-
-				multiPart.addBodyPart (textPart);
-				multiPart.addBodyPart (attachment);
-
-				for (File f : attachments) {
-					MimeBodyPart fileAttachment = new MimeBodyPart ();
-					DataSource source = new FileDataSource(f);
-					fileAttachment.setDataHandler(new DataHandler(source));
-					fileAttachment.setDisposition (Part.ATTACHMENT);
-					fileAttachment.setFileName (f.getName ());
-					multiPart.addBodyPart (fileAttachment);
-				}
-
-				message.setContent(multiPart);
+				fileAttachment.setContent(GPG.encrypt (pubkey, gpgdata.fingerprint, sb.toString ()), "text/pgp");
+				fileAttachment.setDisposition (Part.ATTACHMENT);
+				fileAttachment.setFileName ("filelist.gpg");
+				outer.addBodyPart (fileAttachment);
 			}
 
-			Transport.send(message);
-			System.out.println("Done");
-		} catch (MessagingException | GPGException e) {
-			Swing.showException ("Failed to send email", e);
-			e.printStackTrace ();
+			int i = 1;
+			for (File f : attachments) {
+				MimeBodyPart fileAttachment = new MimeBodyPart ();
+				fileAttachment.setContent(GPG.encryptFile(pubkey, gpgdata.fingerprint, f), "text/pgp");
+				fileAttachment.setDisposition (Part.ATTACHMENT);
+				fileAttachment.setFileName ("attachment"+i+".gpg");
+				outer.addBodyPart (fileAttachment);
+				++i;
+			}
+
+			message.setContent(outer);
+		} else {
+			message.setSubject(subject);
+			Multipart multiPart = new MimeMultipart("mixed");
+
+			MimeBodyPart textPart = new MimeBodyPart ();
+			textPart.setText(body, "utf-8");
+
+			MimeBodyPart attachment = new MimeBodyPart ();
+			attachment.setContent(GPG.getArmoredPublicKey (gpgdata.fingerprint), "application/octet-stream");
+			attachment.setDisposition (Part.ATTACHMENT);
+			attachment.setFileName ("publickey.asc");
+
+			multiPart.addBodyPart (textPart);
+			multiPart.addBodyPart (attachment);
+
+			for (File f : attachments) {
+				MimeBodyPart fileAttachment = new MimeBodyPart ();
+				DataSource source = new FileDataSource(f);
+				fileAttachment.setDataHandler(new DataHandler(source));
+				fileAttachment.setDisposition (Part.ATTACHMENT);
+				fileAttachment.setFileName (f.getName ());
+				multiPart.addBodyPart (fileAttachment);
+			}
+
+			message.setContent(multiPart);
 		}
+
+		Transport.send(message);
+		System.out.println("Done");
 	}
 
 	private void recursiveList (Folder [] fs, List<FolderDesc> ret) throws MessagingException {
@@ -376,51 +371,53 @@ public class HippoCrypt {
 			prefs.put ("key-"+fromemail, fingerprint);
 	}
 
-	public List<Email> getHeadersForFolder (String folderName) throws SQLException, ClassNotFoundException, IOException, MessagingException {
+	public List<Email> getHeadersForFolder (String folderName, boolean onlyCache) throws SQLException, ClassNotFoundException, IOException, MessagingException {
 		IMAPFolder f = null;
 		Cache cache = Cache.getInstance ();
 		synchronized(storeGuard) {
-    		try {
-    
-    			f = (IMAPFolder)store.getFolder (folderName);
-    			f.open (Folder.READ_ONLY);
-    
-    			int mode = f.getMode ();
-    			if ((mode & Folder.HOLDS_MESSAGES) == 0) {
-    				f.close (false);
-    				return Collections.EMPTY_LIST;
-    			}
-    			
-    			long requestFrom = cache.getLargestUid (folderName) + 1; // uids start from one
-    			long requestTo = f.getUIDNext ();
-    
-    			Message [] messages = f.getMessagesByUID (requestFrom, requestTo);
-    
-    
-    			FetchProfile fp = new FetchProfile();
-    			fp.add(FetchProfile.Item.ENVELOPE);
-    			fp.add ("PGP-Subject");
-    
-    			f.fetch (messages, fp);
-    
-    
-    			List<Email> newEmails = new ArrayList<>();
-    			for (Message message : messages) {
-    				Email a = new Email ();
-    				a.sentDate = message.getSentDate ();
-    				a.subject = getSubjectFromMessage (message);
-    				a.from = getFromString (message);
-    				a.folder = folderName;
-    				a.uid = f.getUID (message);
-    
-    				newEmails.add (a);
-    			}
-    			
-    			cache.store (newEmails);
-    			
-    			f.close (false);
-    			return cache.getEmailsForFolder (folderName);
-    		} finally {
+			try {
+
+				if (!onlyCache) {
+					f = (IMAPFolder)store.getFolder (folderName);
+					f.open (Folder.READ_ONLY);
+
+					int mode = f.getMode ();
+					if ((mode & Folder.HOLDS_MESSAGES) == 0) {
+						f.close (false);
+						return Collections.EMPTY_LIST;
+					}
+
+					long requestFrom = cache.getLargestUid (folderName) + 1; // uids start from one
+					long requestTo = f.getUIDNext ();
+
+					Message [] messages = f.getMessagesByUID (requestFrom, requestTo);
+
+
+					FetchProfile fp = new FetchProfile();
+					fp.add(FetchProfile.Item.ENVELOPE);
+					fp.add ("PGP-Subject");
+
+					f.fetch (messages, fp);
+
+
+					List<Email> newEmails = new ArrayList<>();
+					for (Message message : messages) {
+						Email a = new Email ();
+						a.sentDate = message.getSentDate ();
+						a.subject = getSubjectFromMessage (message);
+						a.from = getFromString (message);
+						a.folder = folderName;
+						a.uid = f.getUID (message);
+
+						newEmails.add (a);
+					}
+
+					cache.store (newEmails);
+
+					f.close (false);
+				}
+				return cache.getEmailsForFolder (folderName);
+			} finally {
     			try {
     				if (f != null && f.isOpen ()) {
     					f.close (false);

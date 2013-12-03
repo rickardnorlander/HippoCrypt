@@ -2,6 +2,7 @@ package HippoCrypt;
 import java.awt.*;
 
 import javax.mail.MessagingException;
+import javax.mail.internet.AddressException;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.*;
@@ -18,6 +19,7 @@ import java.awt.event.*;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.net.*;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -61,6 +63,7 @@ public class MainUI extends JFrame {
 	private JButton btnSave;
 	
 	private Email displayedEmail;
+	private String currentFolder = null;
 
 	/**
 	 * Create the frame.
@@ -117,7 +120,7 @@ public class MainUI extends JFrame {
 		cardPanel.setLayout(new CardLayout(0, 0));
 		
 		welcomePanel = new JPanel();
-		cardPanel.add(welcomePanel, "name_147962662971102");
+		cardPanel.add(welcomePanel, "welcomePanel");
 		SpringLayout sl_welcomePanel = new SpringLayout();
 		welcomePanel.setLayout(sl_welcomePanel);
 		
@@ -338,7 +341,21 @@ public class MainUI extends JFrame {
 			public void actionPerformed(ActionEvent arg0) {
 				runInThreadWithProgressBar (new Runnable () {
 					@Override public void run () {
-						hc.sendMail (toField.getText (), subjectOutField.getText (), pgp, bodyOut.getText (), ah.getFiles ());
+						try {
+							hc.sendMail (toField.getText (), subjectOutField.getText (), pgp, bodyOut.getText (), ah.getFiles ());
+							try {
+								if (currentFolder != null)
+									showEmailList (hc.getHeadersForFolder (currentFolder, true));
+								else
+									((CardLayout)cardPanel.getLayout()).show(cardPanel, "welcomePanel");								
+							} catch (ClassNotFoundException | SQLException | IOException | MessagingException e) {
+								util.Swing.showException ("Couldn't show mail list", e);
+								e.printStackTrace();
+							}
+						} catch (MessagingException | GPGException e) {
+							Swing.showException ("Failed to send email", e);
+							e.printStackTrace ();
+						}
 					}
 				});
 			}
@@ -442,12 +459,13 @@ public class MainUI extends JFrame {
 					new SwingWorker<java.util.List<Email>, Object> () {
 						@Override
 						protected List<Email> doInBackground () throws Exception {
-							return MainUI.this.hc.getHeadersForFolder (pathToString(tp));
+							return MainUI.this.hc.getHeadersForFolder (pathToString(tp), false);
 						}
 						@Override
 						protected void done () {
 							try {
 								showEmailList(get());
+								currentFolder = pathToString (tp);
 							} catch (InterruptedException | ExecutionException e) {
 								e.printStackTrace();
 							} finally {

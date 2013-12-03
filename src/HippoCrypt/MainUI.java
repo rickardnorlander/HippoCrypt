@@ -433,10 +433,10 @@ public class MainUI extends JFrame {
 		mailFolderTree.setRootVisible(false);
 		mailFolderTree.setShowsRootHandles(true);
 		scrollPane.setViewportView(mailFolderTree);
-		mailFolderTree.addMouseListener (new MouseAdapter () { // Show mails in folder when clicked
+		mailFolderTree.addTreeSelectionListener (new TreeSelectionListener() {
 			@Override
-			public void mouseClicked (MouseEvent arg0) {
-				final TreePath tp = mailFolderTree.getPathForLocation (arg0.getX (), arg0.getY ());
+			public void valueChanged (TreeSelectionEvent arg0) {
+				final TreePath tp = arg0.getPath ();
 				if (tp != null) {
 					final long id = startSlowThing ();
 					new SwingWorker<java.util.List<Email>, Object> () {

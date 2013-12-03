@@ -45,7 +45,10 @@ public class HippoCrypt {
 		GPGData ret = new GPGData ();
 		ret.fingerprint = prefs.get (PREF_GPG_FP);
 		if(ret.fingerprint == null) {
+			GenPGPDialog d = new GenPGPDialog ();
+			d.setVisible (true);
 			ret = GPG.genGPG ("A", "a@a.com", "password");
+			d.dispose ();
 			
 			prefs.setAutoCommit (false);
 			prefs.put (PREF_GPG_FP, ret.fingerprint);

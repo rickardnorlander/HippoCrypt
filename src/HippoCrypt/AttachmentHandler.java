@@ -35,6 +35,16 @@ public class AttachmentHandler {
 		files.add (f);
 		n++;
 	}
+	
+	public void clear () {
+		DefaultComboBoxModel<String> dcbm = (DefaultComboBoxModel<String>)cb.getModel ();
+		dcbm.removeAllElements ();
+		files.clear ();
+		n = 0;
+		dcbm.addElement (defaultText);
+		cb.setEnabled (false);
+		jb.setEnabled (false);
+	}
 
 	public void delete () {
 		int index = cb.getSelectedIndex ();

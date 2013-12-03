@@ -502,6 +502,7 @@ public class MainUI extends JFrame {
 		subjectOutField.setText (subjectOut);
 		bodyOut.setText (bodyOutText);
 		toField.setText (to);
+		ah.clear ();
 		((CardLayout)cardPanel.getLayout()).show(cardPanel, "composeMailPanel");
 	}
 	

@@ -72,7 +72,7 @@ public class HippoCrypt {
 
 			if (pubkey != null) {
 				message.setSubject("HippoCrypt encrypted email");
-				String encSubject = GPG.encrypt (pubkey, subject);
+				String encSubject = GPG.encrypt (pubkey, gpgdata.fingerprint, subject);
 
 				// Strip the pgp headers
 				int ind1 = encSubject.indexOf ('\n');
@@ -99,7 +99,7 @@ public class HippoCrypt {
 				// Construct encrypted part
 
 				MimeBodyPart pgppart = new MimeBodyPart();
-				pgppart.setContent(GPG.encrypt (pubkey, body), "text/pgp; charset=utf-8");
+				pgppart.setContent(GPG.encrypt (pubkey, gpgdata.fingerprint, body), "text/pgp; charset=utf-8");
 
 				// Construct message for incompatible readers
 
@@ -134,7 +134,7 @@ public class HippoCrypt {
 						sb.append(f.getName ());
 						sb.append("\n");
 					}
-					fileAttachment.setContent(GPG.encrypt (pubkey, sb.toString ()), "text/pgp");
+					fileAttachment.setContent(GPG.encrypt (pubkey, gpgdata.fingerprint, sb.toString ()), "text/pgp");
 					fileAttachment.setDisposition (Part.ATTACHMENT);
 					fileAttachment.setFileName ("filelist.gpg");
 					outer.addBodyPart (fileAttachment);
@@ -143,7 +143,7 @@ public class HippoCrypt {
 				int i = 1;
 				for (File f : attachments) {
 					MimeBodyPart fileAttachment = new MimeBodyPart ();
-					fileAttachment.setContent(GPG.encryptFile(pubkey, f), "text/pgp");
+					fileAttachment.setContent(GPG.encryptFile(pubkey, gpgdata.fingerprint, f), "text/pgp");
 					fileAttachment.setDisposition (Part.ATTACHMENT);
 					fileAttachment.setFileName ("attachment"+i+".gpg");
 					outer.addBodyPart (fileAttachment);

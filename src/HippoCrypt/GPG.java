@@ -249,9 +249,9 @@ public abstract class GPG {
 		}
 	}
 
-	public static String encrypt (String pubkey, String cleartext) throws GPGException {
+	public static String encrypt (String pubkey, String pubkey2, String cleartext) throws GPGException {
 		// Construct encrypted part
-		String [] cmd = new String []{"gpg", "-ear", pubkey, "--always-trust", "--no-default-keyring", "--keyring", "HippoCryptPubRing.gpg"};
+		String [] cmd = new String []{"gpg", "-ear", pubkey, "-r", pubkey2, "--always-trust", "--no-default-keyring", "--keyring", "HippoCryptPubRing.gpg"};
 		final StringBuffer sb = new StringBuffer ();
 		try {
 			invokeCMD(cmd, cleartext, new MyRunnable<String>() {
@@ -274,11 +274,11 @@ public abstract class GPG {
 		return sb.toString ();
 	}
 	
-	public static String encryptFile (String pubkey, File f) throws GPGException {
+	public static String encryptFile (String pubkey, String pubkey2, File f) throws GPGException {
 		// Construct encrypted part
 		final StringBuffer sb = new StringBuffer ();
 		try {
-			String [] cmd = new String []{"gpg", "-ear", pubkey, "--always-trust", "--no-default-keyring", "--keyring", "HippoCryptPubRing.gpg", "-o-", f.getCanonicalPath ()};
+			String [] cmd = new String []{"gpg", "-ear", pubkey, "-r", pubkey2, "--always-trust", "--no-default-keyring", "--keyring", "HippoCryptPubRing.gpg", "-o-", f.getCanonicalPath ()};
 			invokeCMD(cmd, "", new MyRunnable<String>() {
 				@Override
 				public void run (String t) {

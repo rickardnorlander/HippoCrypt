@@ -264,7 +264,6 @@ public abstract class GPG {
 			}, new MyRunnable<String>() {
 				@Override
 				public void run (String t) {
-					sb.append (t+"\n");
 					System.out.println("err "+t);
 				}
 			}); 
@@ -289,7 +288,6 @@ public abstract class GPG {
 			}, new MyRunnable<String>() {
 				@Override
 				public void run (String t) {
-					sb.append (t+"\n");
 					System.out.println("err "+t);
 				}
 			}); 

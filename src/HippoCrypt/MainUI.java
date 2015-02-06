@@ -258,6 +258,28 @@ public class MainUI extends JFrame {
 		showMailPanel.add(btnOpen);
 		
 		btnSave = new JButton("Save");
+		btnSave.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				int n = attachmentInComboBox.getSelectedIndex ();
+				Attachment att = displayedEmail.attachments.get(n);
+
+				JFileChooser c = new JFileChooser();
+				File d = c.getCurrentDirectory();
+				c.setSelectedFile(new File(d, att.filename));
+				int option = c.showSaveDialog(MainUI.this);
+				if (option != JFileChooser.APPROVE_OPTION) {
+					return;
+				}
+				File f = c.getSelectedFile();
+
+				try {
+					hc.writeAttachmentToFile(att, f);
+				} catch (MessagingException | IOException | GPGException e) {
+					Swing.showException("Couldn't save file", e);
+					e.printStackTrace();
+				}
+			}
+		});
 		sl_showMailPanel.putConstraint(SpringLayout.EAST, btnOpen, -20, SpringLayout.WEST, btnSave);
 		sl_showMailPanel.putConstraint(SpringLayout.SOUTH, btnSave, 0, SpringLayout.SOUTH, forwardButton);
 		sl_showMailPanel.putConstraint(SpringLayout.EAST, btnSave, -10, SpringLayout.EAST, showMailPanel);

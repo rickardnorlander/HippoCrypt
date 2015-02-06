@@ -140,36 +140,4 @@ public class Cache {
 		}
 		return cache;
 	}
-//	
-//	public static void main (String args []) throws ClassNotFoundException, SQLException, IOException {
-//		Cache cache = Cache.getInstance ();
-//		Email email = new Email ();
-//		System.out.println (cache.getLargestUid());
-//		System.out.println (cache.getEmailForUid(6));
-//		email.body = "a";
-//		email.folder ="b";
-//		email.from = "c";
-//		email.sentDate = new java.util.Date();
-//		email.subject = "d";
-//		email.uid = 60000000000000003L;
-//		cache.store (Collections.singletonList (email));
-//		cache.setBody (6, "haha");
-//		System.out.println (cache.getEmailForUid(email.uid));
-//		System.out.println (cache.getLargestUid());
-//		
-//		
-//		for (String s : cache.getFolders ()) {
-//			System.out.println("folder: "+s);
-//		}
-//		List<String> f = new ArrayList<> ();
-//		f.add ("b");
-//		f.add ("a");
-//		for (String s : cache.getFolders ()) {
-//			System.out.println("folder: "+s);
-//		}
-//		cache.setFolders (f);
-//		for (String s : cache.getFolders ()) {
-//			System.out.println("folder: "+s);
-//		}
-//	}
 }

@@ -3,7 +3,9 @@ package HippoCrypt;
 import java.io.InputStream;
 import java.util.*;
 
+import javax.mail.Address;
 import javax.mail.Part;
+import javax.mail.internet.InternetAddress;
 
 import util.NullHelper;
 
@@ -16,7 +18,9 @@ public class Email {
 
 	public String folder;
 	public List<Attachment> attachments;
-
+	List<InternetAddress> to;
+	List<InternetAddress> cc;
+	List<InternetAddress> replyTo;
 
 	public static class Attachment {
 		String filename;

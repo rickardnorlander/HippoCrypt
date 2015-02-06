@@ -1,6 +1,7 @@
 package HippoCrypt;
 import java.awt.*;
 
+import javax.mail.Address;
 import javax.mail.MessagingException;
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
@@ -191,6 +192,26 @@ public class MainUI extends JFrame {
 		sl_showMailPanel.putConstraint(SpringLayout.WEST, forwardButton, 20, SpringLayout.EAST, replyAllButton);
 		sl_showMailPanel.putConstraint(SpringLayout.SOUTH, replyAllButton, -10, SpringLayout.SOUTH, showMailPanel);
 		showMailPanel.add(replyAllButton);
+		replyAllButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				try {
+					List<InternetAddress> la = AddressUtils.mergeAddresses(displayedEmail.replyTo, displayedEmail.to, displayedEmail.cc);
+					if (la.size() > 1) {
+						Iterator<InternetAddress> iia = la.iterator();
+						while (iia.hasNext()) {
+							InternetAddress ia = iia.next();
+							if (ia.getAddress().equals(hc.getMyEmailAddress())) {
+								iia.remove();
+								break;
+							}
+						}
+					}
+					showCompose("Re: " + subjectLabelIn.getText(), Quote.quote(bodyIn.getText()), AddressUtils.addrArrToStr(la));
+				} catch (AddressException e) {
+					e.printStackTrace();
+				}
+			}
+		});
 		
 		JButton replyButton = new JButton("Reply");
 		sl_showMailPanel.putConstraint(SpringLayout.WEST, replyAllButton, 20, SpringLayout.EAST, replyButton);
@@ -198,7 +219,8 @@ public class MainUI extends JFrame {
 		sl_showMailPanel.putConstraint(SpringLayout.SOUTH, replyButton, -10, SpringLayout.SOUTH, showMailPanel);
 		replyButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				showCompose("Re: "+subjectLabelIn.getText (), Quote.quote (bodyIn.getText ()), fromLabel.getText ());
+				String to = AddressUtils.addrArrToStr(displayedEmail.replyTo);
+				showCompose("Re: "+subjectLabelIn.getText (), Quote.quote (bodyIn.getText ()), to);
 			}
 		});
 		showMailPanel.add(replyButton);

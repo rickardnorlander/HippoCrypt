@@ -7,6 +7,7 @@ import java.util.regex.*;
 
 import javax.activation.*;
 import javax.mail.*;
+import javax.mail.Message.RecipientType;
 import javax.mail.internet.*;
 import javax.swing.JOptionPane;
 import javax.swing.tree.*;
@@ -66,6 +67,10 @@ public class HippoCrypt {
 		return ret;
 	}
 
+	public String getMyEmailAddress() {
+		return email;
+	}
+
 	public List<String> getAllFingerprintsOrFail (InternetAddress [] ads) {
 		List<String> ret = new ArrayList<>();
 		for(InternetAddress ia : ads) {
@@ -76,6 +81,7 @@ public class HippoCrypt {
 		}
 		return ret;
 	}
+	
 	
 	public void sendMail (String to, String subject, String body, List<File> attachments) throws MessagingException, GPGException {
 		Message message = new MimeMessage(session);
@@ -307,6 +313,12 @@ public class HippoCrypt {
 		}
 	}
 
+	private static List<InternetAddress> getRec (Address[] recipients) throws MessagingException {
+		if (recipients == null)
+			return Collections.emptyList();
+		return Arrays.asList((InternetAddress[])recipients);
+	}
+	
 	public Email loadAnEmail (String folder, long uid) {
 		Email ret = new Email ();
 		IMAPFolder f = null;
@@ -316,11 +328,14 @@ public class HippoCrypt {
     			f.open (Folder.READ_ONLY);
     
     			Message m = f.getMessageByUID (uid);
-    
+    			
     			ret.folder = folder;
     			ret.from = getFromString (m);
     			ret.sentDate = m.getSentDate ();
     			ret.subject = getSubjectFromMessage (m);
+    			ret.to = getRec(m.getRecipients(RecipientType.TO));
+    			ret.cc = getRec(m.getRecipients(RecipientType.CC));
+    			ret.replyTo = getRec(m.getReplyTo());
     
     			MyMessage mm = parseMessage (m);
     

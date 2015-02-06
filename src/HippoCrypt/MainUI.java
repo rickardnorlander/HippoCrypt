@@ -158,7 +158,6 @@ public class MainUI extends JFrame {
 		bodyIn.setContentType("text/html");
 		scrollPane_1.setViewportView(bodyIn);
 		bodyIn.setEditable(false);
-		bodyIn.putClientProperty("html.disable", Boolean.TRUE);
 		bodyIn.addHyperlinkListener (new HyperlinkListener () {
 			@Override
 			public void hyperlinkUpdate (HyperlinkEvent e) {

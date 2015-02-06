@@ -1,7 +1,6 @@
 package HippoCrypt;
 import java.awt.*;
 
-import javax.mail.Address;
 import javax.mail.MessagingException;
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
@@ -10,8 +9,6 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.*;
 import javax.swing.tree.*;
 import javax.swing.border.LineBorder;
-
-import org.apache.commons.io.IOUtils;
 
 import HippoCrypt.Email.Attachment;
 import HippoCrypt.GPG.GPGException;
@@ -55,10 +52,10 @@ public class MainUI extends JFrame {
 	private Set<Long> slowRunning = new HashSet<>();
 	private JProgressBar progressBar;
 	
-	private JComboBox attachmentOutCombobox;
+	private JComboBox<String> attachmentOutCombobox;
 	private JButton deleteAttachmentButton;
 	private AttachmentHandler ah;
-	private JComboBox attachmentInComboBox;
+	private JComboBox<String> attachmentInComboBox;
 	private JButton btnOpen;
 	private JButton btnSave;
 	
@@ -249,7 +246,7 @@ public class MainUI extends JFrame {
 		sl_showMailPanel.putConstraint(SpringLayout.NORTH, lblAttachments, 4, SpringLayout.NORTH, forwardButton);
 		showMailPanel.add(lblAttachments);
 		
-		attachmentInComboBox = new JComboBox();
+		attachmentInComboBox = new JComboBox<>();
 		sl_showMailPanel.putConstraint(SpringLayout.EAST, lblAttachments, -20, SpringLayout.WEST, attachmentInComboBox);
 		sl_showMailPanel.putConstraint(SpringLayout.SOUTH, attachmentInComboBox, -13, SpringLayout.SOUTH, showMailPanel);
 		showMailPanel.add(attachmentInComboBox);
@@ -428,7 +425,7 @@ public class MainUI extends JFrame {
 		sl_composeMailPanel.putConstraint(SpringLayout.NORTH, deleteAttachmentButton, 0, SpringLayout.NORTH, submitButton);
 		composeMailPanel.add(deleteAttachmentButton);
 
-		attachmentOutCombobox = new JComboBox();
+		attachmentOutCombobox = new JComboBox<>();
 		sl_composeMailPanel.putConstraint(SpringLayout.WEST, deleteAttachmentButton, 20, SpringLayout.EAST, attachmentOutCombobox);
 		attachmentOutCombobox.setEnabled(false);
 		sl_composeMailPanel.putConstraint(SpringLayout.NORTH, attachmentOutCombobox, 0, SpringLayout.NORTH, submitButton);
@@ -555,7 +552,7 @@ public class MainUI extends JFrame {
 			btnOpen.setEnabled (true);
 			btnSave.setEnabled (true);
 			attachmentInComboBox.setEnabled (true);
-			DefaultComboBoxModel dcbm = new DefaultComboBoxModel<> ();
+			DefaultComboBoxModel<String> dcbm = new DefaultComboBoxModel<> ();
 			for (Attachment a : email.attachments)
 				dcbm.addElement (a.filename);
 			attachmentInComboBox.setModel (dcbm);
@@ -563,7 +560,7 @@ public class MainUI extends JFrame {
 			btnOpen.setEnabled (false);
 			btnSave.setEnabled (false);
 			attachmentInComboBox.setEnabled (false);
-			DefaultComboBoxModel dcbm = new DefaultComboBoxModel<> ();
+			DefaultComboBoxModel<String> dcbm = new DefaultComboBoxModel<> ();
 			attachmentInComboBox.setModel (dcbm);
 		}
 		

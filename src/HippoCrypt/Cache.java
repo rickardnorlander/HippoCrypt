@@ -4,8 +4,6 @@ import java.io.*;
 import java.sql.*;
 import java.util.*;
 
-import util.NullHelper;
-
 /**
  * A cache for email and email folders. Backed by SQLite
  */

@@ -1,9 +1,7 @@
 package HippoCrypt;
 
-import java.io.InputStream;
 import java.util.*;
 
-import javax.mail.Address;
 import javax.mail.Part;
 import javax.mail.internet.InternetAddress;
 

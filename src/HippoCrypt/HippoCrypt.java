@@ -206,7 +206,6 @@ public class HippoCrypt {
 
 	private void recursiveList (Folder [] fs, List<FolderDesc> ret) throws MessagingException {
 		for (Folder f : fs) {
-			int type = f.getType ();
 			FolderDesc fd = new FolderDesc ();
 			fd.fullName = f.getFullName ();
 			Folder parent = f.getParent ();
@@ -235,8 +234,8 @@ public class HippoCrypt {
 
 			MyMessage ret = new MyMessage ();
 			ret.attachments = Collections.singletonList (a);
-			ret.text = Collections.EMPTY_LIST;
-			ret.isEncrypted = Collections.EMPTY_LIST;
+			ret.text = Collections.emptyList();
+			ret.isEncrypted = Collections.emptyList();
 			return ret;
 		}
 		if (p.isMimeType("text/pgp")) {
@@ -244,7 +243,7 @@ public class HippoCrypt {
 			MyMessage ret = new MyMessage ();
 			ret.text = Collections.singletonList (IOUtils.toString((InputStream) p.getContent(), "UTF-8"));
 			ret.isEncrypted = Collections.singletonList (true);
-			ret.attachments = Collections.EMPTY_LIST;
+			ret.attachments = Collections.emptyList();
 			return ret;
 		}
 		if (p.isMimeType("text/plain")) {
@@ -255,7 +254,7 @@ public class HippoCrypt {
 			ret.text = Collections.singletonList (text);
 
 			ret.isEncrypted = Collections.singletonList (false);
-			ret.attachments = Collections.EMPTY_LIST;
+			ret.attachments = Collections.emptyList();
 			return ret;
 		}
 		if (p.isMimeType("text/html")) {
@@ -265,7 +264,7 @@ public class HippoCrypt {
 			ret.text = Collections.singletonList (text);
 
 			ret.isEncrypted = Collections.singletonList (false);
-			ret.attachments = Collections.EMPTY_LIST;
+			ret.attachments = Collections.emptyList();
 			return ret;
 		}
 
@@ -416,7 +415,7 @@ public class HippoCrypt {
 					int mode = f.getMode ();
 					if ((mode & Folder.HOLDS_MESSAGES) == 0) {
 						f.close (false);
-						return Collections.EMPTY_LIST;
+						return Collections.emptyList();
 					}
 
 					long requestFrom = cache.getLargestUid (folderName) + 1; // uids start from one

@@ -6,8 +6,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.regex.*;
 
-import javax.swing.JOptionPane;
-
 import util.*;
 
 /**
@@ -43,7 +41,7 @@ public abstract class GPG {
 
 	public static boolean isKill (Process p) {
 		try {
-			int t = p.exitValue ();
+			p.exitValue ();
 			return true;
 		} catch(IllegalThreadStateException e) {
 			return false;

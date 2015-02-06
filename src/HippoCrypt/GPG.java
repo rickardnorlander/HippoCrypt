@@ -13,6 +13,8 @@ import util.*;
  *
  */
 public abstract class GPG {
+	private static Pattern encryptedPattern = Pattern.compile("\\s*-----BEGIN PGP MESSAGE-----\nVersion: .*\n\n([A-Za-z0-9+/=]+\n)+-----END PGP MESSAGE-----\\s*");
+	private static Pattern keyPattern = Pattern.compile("\\s*-----BEGIN PGP PUBLIC KEY BLOCK-----\nVersion: .*\n\n([A-Za-z0-9+/=]+\n)+-----END PGP PUBLIC KEY BLOCK-----\\s*");;
 	public static class GPGData {
 		public String fingerprint;
 		public String pass;
@@ -61,8 +63,7 @@ public abstract class GPG {
 			throw new GPGException("Couldn't get public key", e);
 		}
 		String ret = sb.toString ();
-		if (!ret.contains ("-----BEGIN PGP PUBLIC KEY BLOCK-----"))
-			throw new GPGException ("Couldn't get public key");
+		verifyArmor(ret);
 		return ret;
 	}
 
@@ -167,6 +168,7 @@ public abstract class GPG {
 					System.out.println("err: "+t);
 				}
 			});
+			// Todo: look for some sign that the importation worked here
 		} catch (GPGException e) {
 			throw new GPGException ("Couldn't import new public key");
 		}
@@ -267,6 +269,7 @@ public abstract class GPG {
 		// Construct encrypted part
 		List<String> cmdl = buildInitial(keys);
 		String [] cmd = cmdl.toArray(new String [cmdl.size()]);
+		String s;
 		final StringBuffer sb = new StringBuffer ();
 		try {
 			invokeCMD(cmd, cleartext, new MyRunnable<String>() {
@@ -281,16 +284,19 @@ public abstract class GPG {
 					System.out.println("err "+t);
 				}
 			}); 
+			s = sb.toString ();
+			verifyEncrypted(s);
 		}
 		catch(GPGException e) {
 			throw new GPGException ("Couldn't encrypt", e);
 		}
-		return sb.toString ();
+		return s;
 	}
 	
 	public static String encryptFile (List<String> keys, File f) throws GPGException {
 		// Construct encrypted part
 		final StringBuffer sb = new StringBuffer ();
+		String s;
 		try {
 			List<String> cmdl = buildInitial(keys);
 			cmdl.add("-o-");
@@ -308,11 +314,23 @@ public abstract class GPG {
 					System.out.println("err "+t);
 				}
 			}); 
+			s = sb.toString ();
+			verifyEncrypted(s);
 		}
 		catch(GPGException | IOException e) {
 			throw new GPGException ("Couldn't encrypt file", e);
 		}
-		return sb.toString ();
+		return s;
 	}
 
+	private static void verifyEncrypted(String s) throws GPGException {
+		Matcher m = encryptedPattern.matcher(s);
+		if (!m.matches())
+			throw new GPGException("Encrypted text has unexpected format");
+	}
+	private static void verifyArmor(String s) throws GPGException {
+		Matcher m = keyPattern.matcher(s);
+		if (!m.matches())
+			throw new GPGException("Armored key has unexpected format");
+	}
 }

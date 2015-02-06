@@ -75,7 +75,6 @@ public class MainUI extends JFrame {
 		setDefaultCloseOperation (JFrame.EXIT_ON_CLOSE);
 		setBounds (100, 100, 970, 617);
 		contentPane = new JPanel ();
-		contentPane.setBackground(Color.GRAY);
 		contentPane.setBorder (new EmptyBorder (5, 5, 5, 5));
 		setContentPane (contentPane);
 		SpringLayout sl_contentPane = new SpringLayout();
@@ -135,7 +134,6 @@ public class MainUI extends JFrame {
 		welcomePanel.add(txtpnhello);
 		
 		JPanel showMailPanel = new JPanel();
-		showMailPanel.setBackground(Color.GRAY);
 		cardPanel.add(showMailPanel, "showMailPanel");
 		SpringLayout sl_showMailPanel = new SpringLayout();
 		showMailPanel.setLayout(sl_showMailPanel);
@@ -270,7 +268,6 @@ public class MainUI extends JFrame {
 		subjectLabelIn.putClientProperty("html.disable", Boolean.TRUE);
 		
 		JPanel composeMailPanel = new JPanel();
-		composeMailPanel.setBackground(Color.ORANGE);
 		cardPanel.add(composeMailPanel, "composeMailPanel");
 		SpringLayout sl_composeMailPanel = new SpringLayout();
 		composeMailPanel.setLayout(sl_composeMailPanel);
@@ -398,7 +395,6 @@ public class MainUI extends JFrame {
 		composeMailPanel.add(attachmentOutCombobox);
 
 		JPanel mailListPanel = new JPanel();
-		mailListPanel.setBackground(Color.GREEN);
 		cardPanel.add(mailListPanel, "mailListPanel");
 		SpringLayout sl_mailListPanel = new SpringLayout();
 		mailListPanel.setLayout(sl_mailListPanel);

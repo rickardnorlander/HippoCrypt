@@ -43,7 +43,7 @@ public class Cache {
 		storePS = connection.prepareStatement ("INSERT INTO Emails (uid, subject, sentDate, body, folder) VALUES (?, ?, ?, ?, ?)");
 		updateBodyPS = connection.prepareStatement ("UPDATE Emails SET body = ? WHERE uid = ?");
 		emailForUidPS = connection.prepareStatement("SELECT * from Emails where uid = ?");
-		emailsForFolderPS = connection.prepareStatement("SELECT * from Emails where folder = ? ORDER BY uid");
+		emailsForFolderPS = connection.prepareStatement("SELECT * from Emails where folder = ? ORDER BY uid DESC");
 		largestUidPS = connection.prepareStatement("SELECT max(uid) from Emails where folder = ?");
 		foldersPS = connection.prepareStatement ("SELECT * FROM Folders ORDER BY name");
 		forgetAllFoldersPS = connection.prepareStatement ("DELETE FROM Folders");

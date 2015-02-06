@@ -1,6 +1,9 @@
 package HippoCrypt;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.regex.*;
 
 import javax.swing.JOptionPane;
@@ -250,9 +253,22 @@ public abstract class GPG {
 		}
 	}
 
-	public static String encrypt (String pubkey, String pubkey2, String cleartext) throws GPGException {
+	private static List<String> buildInitial (List<String> keys) {
+		List<String> ret = new ArrayList<String>();
+		ret.add("gpg");
+		ret.add("-ea");
+		for (String key : keys) {
+			ret.add("-r");
+			ret.add(key);
+		}
+		ret.addAll(Arrays.asList(new String []{"--always-trust", "--no-default-keyring", "--keyring", "HippoCryptPubRing.gpg"}));
+		return ret;
+	}
+	
+	public static String encrypt (List<String> keys, String cleartext) throws GPGException {
 		// Construct encrypted part
-		String [] cmd = new String []{"gpg", "-ear", pubkey, "-r", pubkey2, "--always-trust", "--no-default-keyring", "--keyring", "HippoCryptPubRing.gpg"};
+		List<String> cmdl = buildInitial(keys);
+		String [] cmd = cmdl.toArray(new String [cmdl.size()]);
 		final StringBuffer sb = new StringBuffer ();
 		try {
 			invokeCMD(cmd, cleartext, new MyRunnable<String>() {
@@ -274,11 +290,14 @@ public abstract class GPG {
 		return sb.toString ();
 	}
 	
-	public static String encryptFile (String pubkey, String pubkey2, File f) throws GPGException {
+	public static String encryptFile (List<String> keys, File f) throws GPGException {
 		// Construct encrypted part
 		final StringBuffer sb = new StringBuffer ();
 		try {
-			String [] cmd = new String []{"gpg", "-ear", pubkey, "-r", pubkey2, "--always-trust", "--no-default-keyring", "--keyring", "HippoCryptPubRing.gpg", "-o-", f.getCanonicalPath ()};
+			List<String> cmdl = buildInitial(keys);
+			cmdl.add("-o-");
+			cmdl.add(f.getCanonicalPath ());
+			String [] cmd = cmdl.toArray(new String [cmdl.size()]);
 			invokeCMD(cmd, "", new MyRunnable<String>() {
 				@Override
 				public void run (String t) {

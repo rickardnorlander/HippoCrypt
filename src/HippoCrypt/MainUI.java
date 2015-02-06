@@ -3,6 +3,7 @@ import java.awt.*;
 
 import javax.mail.MessagingException;
 import javax.mail.internet.AddressException;
+import javax.mail.internet.InternetAddress;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.*;
@@ -38,7 +39,6 @@ public class MainUI extends JFrame {
 	private JPanel cardPanel;
 	private static final String ENCRYPTED = "<html><font color=green>Encrypted</font></html>";
 	private static final String NOT_ENCRYPTED = "Not encrypted";
-	private String pgp = null;
 	private JLabel encryptionOutStatus;
 	private JEditorPane bodyOut;
 	private JList<Email> emailList;
@@ -54,7 +54,6 @@ public class MainUI extends JFrame {
 	private Set<Long> slowRunning = new HashSet<>();
 	private JProgressBar progressBar;
 	
-	private final ConfStore prefs;
 	private JComboBox attachmentOutCombobox;
 	private JButton deleteAttachmentButton;
 	private AttachmentHandler ah;
@@ -68,9 +67,8 @@ public class MainUI extends JFrame {
 	/**
 	 * Create the frame.
 	 */
-	public MainUI (HippoCrypt _hc, ConfStore cs) {
+	public MainUI (HippoCrypt _hc) {
 		this.hc = _hc;
-		this.prefs = cs;
 		setTitle("HippoCrypt");
 		setDefaultCloseOperation (JFrame.EXIT_ON_CLOSE);
 		setBounds (100, 100, 970, 617);
@@ -293,10 +291,11 @@ public class MainUI extends JFrame {
 			}
 
 			public void showCanEncrypt() {
-				String str = toField.getText();
-
-				pgp = prefs.get ("key-"+str);
-				encryptionOutStatus.setText(pgp == null ? NOT_ENCRYPTED : ENCRYPTED);
+				List<String> fps = null;
+				try {
+					fps = hc.getAllFingerprintsOrFail(InternetAddress.parse(toField.getText()));
+				} catch (AddressException e) {}
+				encryptionOutStatus.setText(fps == null ? NOT_ENCRYPTED : ENCRYPTED);
 			}
 		});
 		composeMailPanel.add(toField);
@@ -338,7 +337,7 @@ public class MainUI extends JFrame {
 				runInThreadWithProgressBar (new Runnable () {
 					@Override public void run () {
 						try {
-							hc.sendMail (toField.getText (), subjectOutField.getText (), pgp, bodyOut.getText (), ah.getFiles ());
+							hc.sendMail (toField.getText (), subjectOutField.getText (), bodyOut.getText (), ah.getFiles ());
 							try {
 								if (currentFolder != null)
 									showEmailList (hc.getHeadersForFolder (currentFolder, true));

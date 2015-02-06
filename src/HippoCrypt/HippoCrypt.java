@@ -66,15 +66,29 @@ public class HippoCrypt {
 		return ret;
 	}
 
-	public void sendMail (String to, String subject, String pubkey, String body, List<File> attachments) throws MessagingException, GPGException {
+	public List<String> getAllFingerprintsOrFail (InternetAddress [] ads) {
+		List<String> ret = new ArrayList<>();
+		for(InternetAddress ia : ads) {
+			String fp = prefs.get ("key-"+ia.getAddress());
+			if (fp == null)
+				return null;
+			ret.add(fp);
+		}
+		return ret;
+	}
+	
+	public void sendMail (String to, String subject, String body, List<File> attachments) throws MessagingException, GPGException {
 		Message message = new MimeMessage(session);
 		message.setFrom(new InternetAddress(email));
-		message.setRecipients(Message.RecipientType.TO,
-				InternetAddress.parse(to));
-
-		if (pubkey != null) {
+		InternetAddress[] sendto = InternetAddress.parse(to);
+		message.setRecipients(Message.RecipientType.TO, sendto);
+		
+		List<String> fps = getAllFingerprintsOrFail(sendto);
+		
+		if (fps != null) {
 			message.setSubject("HippoCrypt encrypted email");
-			String encSubject = GPG.encrypt (pubkey, gpgdata.fingerprint, subject);
+			fps.add(gpgdata.fingerprint);
+			String encSubject = GPG.encrypt (fps, subject);
 
 			// Strip the pgp headers
 			int ind1 = encSubject.indexOf ('\n');
@@ -101,7 +115,7 @@ public class HippoCrypt {
 			// Construct encrypted part
 
 			MimeBodyPart pgppart = new MimeBodyPart();
-			pgppart.setContent(GPG.encrypt (pubkey, gpgdata.fingerprint, body), "text/pgp; charset=utf-8");
+			pgppart.setContent(GPG.encrypt (fps, body), "text/pgp; charset=utf-8");
 
 			// Construct message for incompatible readers
 
@@ -136,7 +150,7 @@ public class HippoCrypt {
 					sb.append(f.getName ());
 					sb.append("\n");
 				}
-				fileAttachment.setContent(GPG.encrypt (pubkey, gpgdata.fingerprint, sb.toString ()), "text/pgp");
+				fileAttachment.setContent(GPG.encrypt (fps, sb.toString ()), "text/pgp");
 				fileAttachment.setDisposition (Part.ATTACHMENT);
 				fileAttachment.setFileName ("filelist.gpg");
 				outer.addBodyPart (fileAttachment);
@@ -145,7 +159,7 @@ public class HippoCrypt {
 			int i = 1;
 			for (File f : attachments) {
 				MimeBodyPart fileAttachment = new MimeBodyPart ();
-				fileAttachment.setContent(GPG.encryptFile(pubkey, gpgdata.fingerprint, f), "text/pgp");
+				fileAttachment.setContent(GPG.encryptFile(fps, f), "text/pgp");
 				fileAttachment.setDisposition (Part.ATTACHMENT);
 				fileAttachment.setFileName ("attachment"+i+".gpg");
 				outer.addBodyPart (fileAttachment);
@@ -480,7 +494,7 @@ public class HippoCrypt {
 		
 		prefs = new ConfStore(new File(folder, "configuration.props"));
 
-		final MainUI window2 = new MainUI (this, prefs);
+		final MainUI window2 = new MainUI (this);
 		Cache cache = Cache.getInstance ();
 		window2.setTreeModel (getModelFromFolderDescs (cache.getFolders ()));
 		Long slowId = null;
